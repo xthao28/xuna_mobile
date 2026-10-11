@@ -9,7 +9,7 @@ Flutter companion base for XUNA. The owner confirmed retaining the imported Clea
 - `lib/core/presentation`: base controllers, bindings, navigation and widgets.
 - `lib/features`: feature-specific data/domain/presentation; currently splash and home only.
 - `lib/shared`: reusable constants, themes, mapper base, exceptions and utilities.
-- `lib/routes`: splash/home routes. Home provides the M02 simulator interaction flow through a fake device repository; physical BLE is not implemented.
+- `lib/routes`: splash/home routes. Home provides local MVP interaction through physical BLE or explicitly selected simulator transport.
 
 The imported login/product-detail examples, province models/mappers, old backend endpoint and business-specific locale/constants were removed. Generic base classes, packages, UI assets and generator tooling remain. Network clients require an explicit `baseUrl` and are not registered on startup; the legacy response envelope is retained as base compatibility, not an approved XUNA backend protocol. Bearer-token helpers remain dormant infrastructure, without a login flow.
 
@@ -27,17 +27,19 @@ Generated files/cache are ignored. Asset-generator and localization instructions
 
 Follow root AGENTS.md, PROCESS.md and PLAN.md. This scoped base cleanup does not implement M02 or change device-state ownership decisions.
 
-## M02 simulator slice
+## Local MVP through M05
 
-This checkpoint intentionally binds `SimulatorDeviceRepository` in `HomeBinding`. The screen always displays **SIMULATOR · FAKE BLE**; even on a real phone it does not scan/connect a board. Scan, connect, Idle/Happy, 2400 ms happy expiry and disconnect/reconnect run locally. Domain repository/use-case contracts remain separate from the data fake and GetX presentation. The original core/shared base and dependencies remain intact.
-
-`ProtocolCodec` implements the approved v1 command wire layout and validates status values. Full capabilities negotiation, result correlation, deduplication, real BLE errors/timeouts and plugin transport remain subsequent M02 work; this fake is not evidence that those behaviors work over BLE. No BLE plugin is added at this simulator-only checkpoint.
+Default HomeBinding uses BleDeviceRepository and FlutterBluePlus 1.35.5. Physical transport targets the XUNA MVP service: capabilities, correlated commands/status, life summary and two bounded memory pages. Explicit simulator uses an in-memory fake, always identified in the UI, with the same small preference rule. It never validates board persistence or BLE.
 
 ```sh
 flutter analyze
 flutter test --reporter expanded
-LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 flutter build ios --simulator --debug
-flutter run -d <simulator-id>
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 flutter run -d <simulator-id> --dart-define=XUNA_SIMULATOR=true
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 flutter run -d <real-iphone-id>
 ```
 
-Verified on 2026-10-11 with Flutter 3.32.8 / Dart 3.8.1 and Xcode 14.2: analyzer PASS; 4 protocol/domain/widget tests PASS; iOS simulator debug build PASS; `flutter run` opened Home on iPhone 13/iOS 16.2 and its screenshot was inspected. Interaction flow was exercised by widget tests, not automated native taps. CocoaPods required the UTF-8 locale shown above. Physical validation needs a real iPhone/iPad and BLE firmware. Android native build is unverified.
+Connect, request four animations, choose quiet/play, give explicit feedback, inspect learned preference/recent episodes, or forget memory/preference after confirmation. Text V1 recognizes chơi/yên tĩnh/thích/không thích (short aliases in text_intent.dart); preference feedback requires confirmation. No LLM/backend, no raw text retention. Board owns durable MVP state; simulator data is session-only. Keep Clean/GetX core/shared and existing dependency baseline.
+
+Flutter analyze and 10 protocol/domain/widget tests PASS; iPhone13/iOS16.2 simulator debug build/run PASS on Flutter3.32.8/Dart3.8.1/Xcode14.2. Native iOS Bluetooth adapter compiles; physical phone/signing/permissions and Android native validation remain pending. iOS usage description is present. Preserve BSD-style notices for pinned FlutterBluePlus and all resolved subpackages; newer major versions may use different terms.
+
+Parent docs/roadmap/MVP-local.md owns scope, protocol and physical checklist. The previous 24026b2 simulator checkpoint is committed/pushed; subsequent MVP changes are uncommitted until delivery is requested.

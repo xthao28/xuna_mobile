@@ -15,7 +15,7 @@ void main() {
       Uint8List(0),
       Uint8List.fromList([1, 1, 0, 0, 0, 0, 0, 0]),
       Uint8List.fromList([2, 1, 1, 0, 0, 0, 1, 0]),
-      Uint8List.fromList([1, 1, 1, 0, 0, 0, 2, 0])
+      Uint8List.fromList([1, 1, 1, 0, 0, 0, 4, 0])
     ]) {
       expect(() => ProtocolCodec.parseCommand(bad), throwsFormatException);
     }
@@ -27,7 +27,7 @@ void main() {
     expect(() => ProtocolCodec.parseStatus(bytes), throwsFormatException);
     bytes[1] = 1;
     bytes[6] = 5;
-    expect(() => ProtocolCodec.parseStatus(bytes), throwsStateError);
+    expect(ProtocolCodec.parseStatus(bytes).result, 5);
   });
   test(
       'fake requires connection; happy expires and reconnect reads current state',

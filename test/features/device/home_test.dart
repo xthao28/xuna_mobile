@@ -9,7 +9,7 @@ void main() {
       'simulator UI scans, connects, plays happy, expires and disconnects',
       (tester) async {
     Get.testMode = true;
-    HomeBinding().dependencies();
+    HomeBinding(simulator: true).dependencies();
     await tester.pumpWidget(GetMaterialApp(home: HomePage()));
     expect(find.text('SIMULATOR · FAKE BLE'), findsOneWidget);
     await tester.tap(find.text('Tìm XUNA mô phỏng'));
@@ -25,6 +25,8 @@ void main() {
     await tester.ensureVisible(find.text('Ngắt kết nối'));
     await tester.tap(find.text('Ngắt kết nối'));
     await tester.pump();
+    await tester.drag(find.byType(ListView), const Offset(0, 1200));
+    await tester.pumpAndSettle();
     expect(find.text('Đã ngắt kết nối'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     Get.reset();
