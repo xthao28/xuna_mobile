@@ -29,6 +29,8 @@ class AppDimens {
   static const double padding75 = 75.0;
   static const double padding78 = 78.0;
 
+  static const double iconSize80 = 80;
+
   static const double radius4 = 4;
   static const double radius6 = 6;
   static const double radius8 = 8;

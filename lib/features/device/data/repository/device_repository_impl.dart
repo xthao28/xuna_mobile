@@ -1,0 +1,120 @@
+import 'dart:async';
+
+import 'package:xuna_mobile/core/domain/repository/base_repository.dart';
+import 'package:xuna_mobile/features/device/data/data_source/device_ble_data_source.dart';
+import 'package:xuna_mobile/features/device/data/mapper/device_codes.dart';
+import 'package:xuna_mobile/features/device/data/mapper/device_status_mapper.dart';
+import 'package:xuna_mobile/features/device/data/mapper/life_summary_mapper.dart';
+import 'package:xuna_mobile/features/device/data/mapper/memory_episode_mapper.dart';
+import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
+import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
+import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
+import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
+import 'package:xuna_mobile/features/device/domain/entity/life_summary.dart';
+import 'package:xuna_mobile/features/device/domain/entity/memory_episode.dart';
+import 'package:xuna_mobile/features/device/domain/exception/device_exception.dart';
+import 'package:xuna_mobile/features/device/domain/repository/device_repository.dart';
+
+class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
+  DeviceRepositoryImpl(
+    this._dataSource, {
+    DeviceStatusMapper? statusMapper,
+    LifeSummaryMapper? lifeMapper,
+    MemoryEpisodeMapper? memoryMapper,
+  })  : _statusMapper = statusMapper ?? DeviceStatusMapper(),
+        _lifeMapper = lifeMapper ?? LifeSummaryMapper(),
+        _memoryMapper = memoryMapper ?? MemoryEpisodeMapper();
+
+  final DeviceBleDataSource _dataSource;
+  final DeviceStatusMapper _statusMapper;
+  final LifeSummaryMapper _lifeMapper;
+  final MemoryEpisodeMapper _memoryMapper;
+
+  @override
+  Stream<DeviceStatus> watchStatus() => _dataSource.statuses.transform(
+        StreamTransformer.fromHandlers(
+          handleData: (model, sink) {
+            try {
+              sink.add(_statusMapper.mapToEntity(model));
+            } catch (error, stackTrace) {
+              sink.addError(_translate(error), stackTrace);
+            }
+          },
+          handleError: (error, stackTrace, sink) =>
+              sink.addError(_translate(error), stackTrace),
+        ),
+      );
+
+  @override
+  Future<List<String>> scan() => _guard(_dataSource.scan);
+
+  @override
+  Future<DeviceStatus> connect(String deviceId) => _guard(() async =>
+      _statusMapper.mapToEntity(await _dataSource.connect(deviceId)));
+
+  @override
+  Future<DeviceStatus> requestAnimation(AnimationState animation) =>
+      _send(DeviceCommandModel.animation(DeviceCodes.animation(animation)));
+
+  @override
+  Future<DeviceStatus> suggest(InteractionContext context) =>
+      _send(DeviceCommandModel.suggest(DeviceCodes.context(context)));
+
+  @override
+  Future<void> sendFeedback({
+    required bool approved,
+    required bool fromText,
+    required int decisionId,
+  }) =>
+      _send(DeviceCommandModel.feedback(
+        approved: approved,
+        source: DeviceCodes.feedbackSource(fromText: fromText),
+        target: decisionId,
+      ));
+
+  @override
+  Future<LifeSummary> readLife() =>
+      _guard(() async => _lifeMapper.mapToEntity(await _dataSource.readLife()));
+
+  @override
+  Future<List<MemoryEpisode>> readMemories() => _guard(() async =>
+      _memoryMapper.mapToListEntity(await _dataSource.readMemories()));
+
+  @override
+  Future<void> forget() => _send(const DeviceCommandModel.forget());
+
+  @override
+  Future<void> disconnect() => _guard(_dataSource.disconnect);
+
+  @override
+  void onClose() {
+    unawaited(_dataSource.close());
+    super.onClose();
+  }
+
+  Future<DeviceStatus> _send(DeviceCommandModel command) => _guard(
+      () async => _statusMapper.mapToEntity(await _dataSource.send(command)));
+
+  Future<T> _guard<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(_translate(error), stackTrace);
+    }
+  }
+
+  /// Maps every transport or platform error to a [DeviceException].
+  static DeviceException _translate(Object error) => switch (error) {
+        DeviceException() => error,
+        TimeoutException() =>
+          DeviceException(DeviceExceptionKind.timeout, rootException: error),
+        FormatException() => DeviceException(
+            DeviceExceptionKind.invalidResponse,
+            rootException: error,
+          ),
+        _ => DeviceException(
+            DeviceExceptionKind.communicationFailed,
+            rootException: error,
+          ),
+      };
+}
