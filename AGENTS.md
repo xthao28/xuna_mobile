@@ -188,7 +188,7 @@ Base widgets are the app's shared UI components: buttons, cards, list rows, sect
 - Base widgets are business-free: no controllers, use cases, feature entities, `LocaleKeys` or navigation. Text, data and callbacks come in through constructor parameters; styling comes only from tokens (`AppColors`, `AppTextStyle`, `AppDimens`).
 - Write them as widget classes with `const` constructors, not new static builder functions in `UtilWidget`.
 - Changing a base widget changes every screen: keep its API backward compatible or update every call site in the same change. Add a widget test when it has behavior (states, enabled/disabled, callbacks).
-- **Current state (2026-10-13): there is no XUNA design yet, so no base widgets exist.** Until the design arrives, screens use Flutter Material widgets styled with tokens (button labels keep the Material button theme), and the extraction rule above already applies. `UtilWidget`'s button, card and dropdown builders carry the inherited palette of the imported base; they are not XUNA base widgets, so do not spread them into new screens. When the design is delivered, a dedicated session builds the base widget set from it and migrates existing screens.
+- **Current state (2026-10-14):** the XUNA design (Claude Design "XUNA App") is implemented as tokens (`AppColors.xuna*`, `AppTextStyle.display*`/`mono*`, XUNA stroke/shadow values in `AppDimens`, bundled OFL fonts Anton, Be Vietnam Pro and JetBrains Mono) and base widgets: `AppInkCard`, `AppCtaButton`, `AppBoxButton`, `AppPillButton`, `AppTag`, `AppToggle`, `AppStatusDot`, `AppKeyValueRow`, `AppDisplayHeading`, `AppSheetFrame`, `AppBottomNavBar` + `AppNavItem`. Use them for these roles. `UtilWidget`'s button, card and dropdown builders still carry the inherited palette; do not spread them into new screens.
 
 ### 5.5 User-facing text
 
@@ -272,7 +272,7 @@ Remaining gaps. Do not fix them as a side effect of an unrelated feature; handle
 | `features/device/data/data_source/simulator_device_ble_data_source.dart` | The fake transport still contains a Dart copy of the firmware learner (plan G17) | S20: check it against firmware golden vectors |
 | `features/home/presentation/binding/home_binding.dart` | The device data source and repository are route-scoped | A second screen needs the device: move them to `AppBinding` (§5.6) |
 | `HomeController` status stream handler | Any stream error, including one malformed notification, marks the UI disconnected (MVP behavior kept by the refactor) | Owner decides whether only `disconnected` should do so |
-| `shared/themes/app_colors.dart`, `UtilWidget` buttons/card/dropdown, dialog texts in `vi_VN.json` | Palette and copy inherited from the imported base, not XUNA branding | The XUNA design is delivered (§5.4) |
+| `shared/themes/app_colors.dart` (pre-XUNA tokens), `UtilWidget` buttons/card/dropdown, base dialogs and snack bars, dialog texts in `vi_VN.json` | Still the imported base palette and copy; XUNA tokens and base widgets exist alongside them | A session restyles the base dialogs/snack bars with the XUNA tokens |
 
 ## 12. Definition of Done
 

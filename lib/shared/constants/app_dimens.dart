@@ -42,4 +42,26 @@ class AppDimens {
   static const double radius20 = 20;
   static const double radius30 = 30;
   static const double radius36 = 36;
+
+  // XUNA design system: ink strokes and hard offset shadows.
+  static const double strokeThin = 1.5;
+  static const double stroke2 = 2;
+  static const double stroke = 2.5;
+  static const double strokeThick = 3;
+  static const double shadow2 = 2;
+  static const double shadow3 = 3;
+  static const double shadow4 = 4;
+  static const double shadow5 = 5;
+  static const double shadow6 = 6;
+  static const double radius9 = 9;
+  static const double radius11 = 11;
+  static const double radius18 = 18;
+  static const double radius26 = 26;
+  static const double radiusPill = 999;
+  static const double padding18 = 18;
+  static const double touchTarget = 44;
+  static const double inputHeight = 48;
+  static const double ctaHeight = 70;
+  static const double buttonHeight = 54;
+  static const double navHeight = 58;
 }

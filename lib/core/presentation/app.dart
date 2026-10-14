@@ -8,6 +8,7 @@ import 'package:xuna_mobile/routes/app_pages.dart';
 import 'package:xuna_mobile/routes/app_routes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:xuna_mobile/shared/constants/const_src.dart';
 import 'package:xuna_mobile/shared/themes/app_colors.dart';
 import 'package:xuna_mobile/shared/utils/keyboard.dart';
 
@@ -41,9 +42,14 @@ class App extends BaseGetPage<AppController> {
           // Locale('en', 'US'),
         ],
         theme: ThemeData(
-          scaffoldBackgroundColor: AppColors.backgroundColorLight,
+          fontFamily: AppTextStyle.bodyFamily,
+          scaffoldBackgroundColor: AppColors.xunaPaper,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.xunaLime,
+            surface: AppColors.xunaPaper,
+          ),
           appBarTheme: const AppBarTheme(
-            color: AppColors.backgroundColorLight,
+            color: AppColors.xunaPaper,
           ),
         ),
         builder: (context, child) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:xuna_mobile/core/presentation/controllers/base_getx_controller.dart';
+import 'package:xuna_mobile/core/presentation/navigation/snack_bar_type.dart';
 import 'package:xuna_mobile/features/conversation/domain/entity/text_intent.dart';
 import 'package:xuna_mobile/features/conversation/domain/usecase/parse_text_intent_use_case.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
@@ -24,6 +25,13 @@ import 'package:xuna_mobile/features/device/presentation/extension/device_except
 import 'package:xuna_mobile/features/device/presentation/extension/device_labels.dart';
 import 'package:xuna_mobile/generated/locales.g.dart';
 import 'package:xuna_mobile/shared/exceptions/base/app_exception.dart';
+
+/// Bottom navigation destinations of the home shell.
+enum HomeTab { home, chat, journal, device }
+
+/// One line of the on-screen conversation. Kept in memory only: never
+/// persisted or logged (AGENTS §6.4).
+typedef HomeChatMessage = ({bool fromXuna, String text, DateTime at});
 
 class HomeController extends BaseGetxController {
   HomeController({
@@ -66,6 +74,10 @@ class HomeController extends BaseGetxController {
   final ForgetMemoriesUseCase _forgetMemories;
   final ParseTextIntentUseCase _parseTextIntent;
 
+  /// Oldest messages are dropped beyond this many lines.
+  static const maxMessages = 40;
+
+  final tab = HomeTab.home.obs;
   final devices = <String>[].obs;
   final connected = false.obs;
   final animation = AnimationState.idle.obs;
@@ -75,8 +87,11 @@ class HomeController extends BaseGetxController {
   /// Connection status line, including device errors.
   final message = LocaleKeys.home_statusNotConnected.tr.obs;
 
-  /// Conversation reply line.
-  final reply = LocaleKeys.home_replyIntro.tr.obs;
+  /// Device the app is connected to, for the device screen.
+  final connectedDevice = RxnString();
+
+  /// On-screen conversation, newest last.
+  final messages = <HomeChatMessage>[].obs;
 
   /// Text feedback awaiting confirmation: true approves, false rejects.
   final candidate = Rxn<bool>();
@@ -88,12 +103,14 @@ class HomeController extends BaseGetxController {
   @override
   void onInit() {
     super.onInit();
+    _say(LocaleKeys.home_replyIntro.tr);
     _statusSubscription = _watchDeviceStatus.execute().listen(
       (status) {
         if (connected.value) animation.value = status.animation;
       },
       onError: (Object error) {
         connected.value = false;
+        connectedDevice.value = null;
         candidate.value = null;
         message.value = error is DeviceException
             ? error.localizedMessage
@@ -114,6 +131,7 @@ class HomeController extends BaseGetxController {
         final status = await _connectDevice.execute(deviceId);
         animation.value = status.animation;
         connected.value = true;
+        connectedDevice.value = deviceId;
         candidate.value = null;
         await _refreshLife();
         message.value = isSimulator
@@ -136,7 +154,7 @@ class HomeController extends BaseGetxController {
           InteractionContext.quiet => LocaleKeys.home_replySuggestedQuiet,
           InteractionContext.play => LocaleKeys.home_replySuggestedPlay,
         };
-        reply.value = template.trParams({'action': life.value.action.label});
+        _say(template.trParams({'action': life.value.action.label}));
       });
 
   Future<void> feedback(bool approved, {bool fromText = false}) =>
@@ -144,9 +162,11 @@ class HomeController extends BaseGetxController {
         await _sendFeedback.execute((approved: approved, fromText: fromText));
         candidate.value = null;
         await _refreshLife();
-        reply.value = approved
-            ? LocaleKeys.home_replyFeedbackApproved.tr
-            : LocaleKeys.home_replyFeedbackRejected.tr;
+        _say(
+          approved
+              ? LocaleKeys.home_replyFeedbackApproved.tr
+              : LocaleKeys.home_replyFeedbackRejected.tr,
+        );
       });
 
   /// Asks for confirmation before deleting memory and preference.
@@ -164,14 +184,17 @@ class HomeController extends BaseGetxController {
         await _forgetMemories.execute();
         candidate.value = null;
         await _refreshLife();
-        reply.value = LocaleKeys.home_replyForgotten.tr;
+        _say(LocaleKeys.home_replyForgotten.tr);
       });
 
   /// Local text V1. Feedback intents only become a candidate that the user
   /// must confirm; unknown text never teaches XUNA and is not stored.
   Future<void> submitText(String input) async {
+    final text = input.trim();
+    if (text.isEmpty || isBusy) return;
+    _append((fromXuna: false, text: text, at: DateTime.now()));
     if (!connected.value) {
-      reply.value = LocaleKeys.home_replyNeedConnection.tr;
+      _say(LocaleKeys.home_replyNeedConnection.tr);
       return;
     }
     final intent = _parseTextIntent.execute(input);
@@ -183,7 +206,7 @@ class HomeController extends BaseGetxController {
       case TextIntent.approve:
       case TextIntent.reject:
         if (!life.value.canFeedback) {
-          reply.value = LocaleKeys.home_replyNeedSuggestion.tr;
+          _say(LocaleKeys.home_replyNeedSuggestion.tr);
           return;
         }
         final approved = intent == TextIntent.approve;
@@ -191,17 +214,40 @@ class HomeController extends BaseGetxController {
         final template = approved
             ? LocaleKeys.home_replyConfirmApproved
             : LocaleKeys.home_replyConfirmRejected;
-        reply.value = template.trParams({'action': life.value.action.label});
+        _say(template.trParams({'action': life.value.action.label}));
       case TextIntent.unknown:
-        reply.value = LocaleKeys.home_replyUnknown.tr;
+        _say(LocaleKeys.home_replyUnknown.tr);
     }
   }
 
   void cancelCandidate() => candidate.value = null;
 
+  void selectTab(HomeTab value) => tab.value = value;
+
+  /// Touching XUNA on the home screen asks the device for a happy reaction.
+  Future<void> poke() async {
+    if (!connected.value) {
+      _toast(LocaleKeys.home_pokeNeedConnection.tr);
+      return;
+    }
+    await setAnimation(AnimationState.happy);
+  }
+
+  /// Clears the on-screen conversation; nothing is stored on the device.
+  void restartChat() {
+    candidate.value = null;
+    messages.clear();
+    _say(LocaleKeys.home_replyIntro.tr);
+    _toast(LocaleKeys.home_chatRestarted.tr);
+  }
+
+  /// Feedback for a feature that is shown in the design but not built yet.
+  void showComingSoon() => _toast(LocaleKeys.home_comingSoonToast.tr);
+
   Future<void> disconnect() => _run(() async {
         await _disconnectDevice.execute();
         connected.value = false;
+        connectedDevice.value = null;
         candidate.value = null;
         message.value = LocaleKeys.home_statusDisconnected.tr;
       });
@@ -218,6 +264,18 @@ class HomeController extends BaseGetxController {
     memories.assignAll(await _readMemories.execute());
   }
 
+  void _say(String text) =>
+      _append((fromXuna: true, text: text, at: DateTime.now()));
+
+  void _append(HomeChatMessage line) {
+    messages.add(line);
+    if (messages.length > maxMessages) {
+      messages.removeRange(0, messages.length - maxMessages);
+    }
+  }
+
+  void _toast(String text) => nav.showSnackBar(text, type: SnackBarType.info);
+
   /// One device action at a time; device errors go to [message].
   Future<void> _run(Future<void> Function() action) async {
     if (isBusy) return;
@@ -231,6 +289,7 @@ class HomeController extends BaseGetxController {
   AppException? _handleError(AppException error) {
     if (error is! DeviceException) return error;
     message.value = error.localizedMessage;
+    nav.showSnackBar(error.localizedMessage);
     return null;
   }
 }
