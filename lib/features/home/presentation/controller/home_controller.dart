@@ -28,6 +28,7 @@ class HomeController extends BaseGetxController {
     required SendFeedbackUseCase sendFeedback,
     required ReadLifeSummaryUseCase readLifeSummary,
     required ReadMemoriesUseCase readMemories,
+    required ReadLearningExplanationUseCase readExplanation,
     required ForgetMemoriesUseCase forgetMemories,
     required ParseTextIntentUseCase parseTextIntent,
     required ExtractCandidateUseCase extractCandidate,
@@ -41,6 +42,7 @@ class HomeController extends BaseGetxController {
         _sendFeedback = sendFeedback,
         _readLifeSummary = readLifeSummary,
         _readMemories = readMemories,
+        _readExplanation = readExplanation,
         _forgetMemories = forgetMemories,
         _parseTextIntent = parseTextIntent,
         _extractCandidate = extractCandidate,
@@ -58,6 +60,7 @@ class HomeController extends BaseGetxController {
   final SendFeedbackUseCase _sendFeedback;
   final ReadLifeSummaryUseCase _readLifeSummary;
   final ReadMemoriesUseCase _readMemories;
+  final ReadLearningExplanationUseCase _readExplanation;
   final ForgetMemoriesUseCase _forgetMemories;
   final ParseTextIntentUseCase _parseTextIntent;
   final ExtractCandidateUseCase _extractCandidate;
@@ -207,6 +210,10 @@ class HomeController extends BaseGetxController {
       return;
     }
     final event = extraction.candidate;
+    if (event?.type == CandidateType.askWhy) {
+      await _run(_sayExplanation);
+      return;
+    }
     if (event != null && event.requiresConfirmation) {
       if (event.type == CandidateType.statePreference &&
           !_confirmCandidate.supportsStatedPreference) {
@@ -254,8 +261,45 @@ class HomeController extends BaseGetxController {
         candidate.value = null;
         candidateReview.value = null;
         await _refreshLife();
-        _say(LocaleKeys.home_replyTeachingApplied.tr);
+        await _sayExplanation();
       });
+
+  Future<void> _sayExplanation() async {
+    final explanation = await _readExplanation.execute();
+    if (explanation == null ||
+        explanation.reason == LearningReason.unavailable) {
+      _say(LocaleKeys.home_replyExplanationUnavailable.tr);
+      return;
+    }
+    final reason = switch (explanation.reason) {
+      LearningReason.unavailable => LocaleKeys.home_replyExplanationUnavailable,
+      LearningReason.highestEstimate => LocaleKeys.home_whyHighest,
+      LearningReason.exploration => LocaleKeys.home_whyExplore,
+      LearningReason.noEvidence => LocaleKeys.home_whyNoEvidence,
+      LearningReason.told => LocaleKeys.home_whyTold,
+    };
+    final context = switch (explanation.interaction) {
+      LearningInteraction.quiet => LocaleKeys.home_whyQuiet,
+      LearningInteraction.play => LocaleKeys.home_whyPlay,
+      LearningInteraction.greeting => LocaleKeys.home_whyGreeting,
+    };
+    final day = switch (explanation.dayPart) {
+      LearningDayPart.unknown => LocaleKeys.home_whyUnknownTime,
+      LearningDayPart.morning => LocaleKeys.home_whyMorning,
+      LearningDayPart.afternoon => LocaleKeys.home_whyAfternoon,
+      LearningDayPart.evening => LocaleKeys.home_whyEvening,
+      LearningDayPart.night => LocaleKeys.home_whyNight,
+    };
+    _say(LocaleKeys.home_replyExplanation.trParams({
+      'action': explanation.action.label,
+      'context': context.tr,
+      'day': day.tr,
+      'reason': reason.tr,
+      'rated': explanation.rated == 255 ? '≥255' : '${explanation.rated}',
+      'statedPositive': explanation.statedPositive.toStringAsFixed(2),
+      'statedNegative': explanation.statedNegative.toStringAsFixed(2),
+    }));
+  }
 
   void _prepareCandidate(CandidateEvent event) {
     teachingCandidate.value = event;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:xuna_mobile/assets.dart';
 import 'package:xuna_mobile/generated/locales.g.dart';
 import 'package:xuna_mobile/shared/constants/const_src.dart';
 import 'package:xuna_mobile/shared/themes/app_colors.dart';
@@ -61,10 +60,8 @@ class HomeGrowthCard extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        Image.asset(
-                          Assets.ASSETS_IMAGES_HERO_PNG,
+                        AppXunaPet(
                           height: _stageHeights[stage],
-                          filterQuality: FilterQuality.none,
                         ),
                         const SizedBox(height: AppDimens.padding3),
                         Text(names[stage], style: AppTextStyle.mono9Bo),

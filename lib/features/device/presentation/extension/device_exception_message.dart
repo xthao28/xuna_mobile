@@ -20,6 +20,8 @@ extension DeviceExceptionMessage on DeviceException {
         DeviceExceptionKind.timeout => LocaleKeys.device_errorTimeout.tr,
         DeviceExceptionKind.outcomeUnknown =>
           LocaleKeys.device_errorOutcomeUnknown.tr,
+        DeviceExceptionKind.feedbackExpired =>
+          LocaleKeys.device_errorFeedbackExpired.tr,
         DeviceExceptionKind.rejected => LocaleKeys.device_errorRejected
             .trParams({'code': '${resultCode ?? '?'}'}),
         DeviceExceptionKind.noPendingSuggestion =>

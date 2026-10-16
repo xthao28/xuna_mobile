@@ -6,6 +6,17 @@ import 'package:xuna_mobile/features/device/data/codec/protocol_codec.dart';
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
 
 void main() {
+  test('status accepts dedicated expired but rejects unknown result codes', () {
+    final bytes = Uint8List(16)
+      ..[0] = 1
+      ..[1] = 1
+      ..[2] = 1
+      ..[6] = 8;
+    expect(ProtocolCodec.decodeStatus(bytes).resultCode, 8);
+    bytes[6] = 9;
+    expect(() => ProtocolCodec.decodeStatus(bytes), throwsFormatException);
+  });
+
   test(
       'wire command uses specified little-endian layout and rejects malformed input',
       () {

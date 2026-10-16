@@ -15,6 +15,7 @@ enum DeviceExceptionKind {
 
   /// The device answered with a non-zero result code.
   rejected,
+  feedbackExpired,
 
   /// Feedback was requested while no suggestion is pending.
   noPendingSuggestion,

@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
+import 'package:xuna_mobile/features/device/domain/entity/learning_explanation.dart';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +20,14 @@ class _FakeDataSource extends Fake implements DeviceBleDataSource {
   _FakeDataSource({this.scanError});
 
   final Object? scanError;
+  @override
+  Future<LearningExplanationModel?> readExplanation() async {
+    final error = scanError;
+    if (error != null) throw error;
+    return LearningExplanationModel.decode(Uint8List.fromList(
+        [1, 20, 0, 0, 1, 4, 0, 0, 154, 0, 128, 0, 128, 0, 0, 0, 128, 0, 0, 0]));
+  }
+
   final _statuses = StreamController<DeviceStatusModel>.broadcast();
 
   @override
@@ -46,6 +57,18 @@ DeviceStatusModel _stateChange(int animationCode) => DeviceStatusModel(
     );
 
 void main() {
+  test('explanation repository maps fixture and translates malformed transport',
+      () async {
+    final repository = DeviceRepositoryImpl(_FakeDataSource());
+    addTearDown(repository.onClose);
+    expect((await repository.readExplanation())!.reason, LearningReason.told);
+    final malformed = DeviceRepositoryImpl(
+        _FakeDataSource(scanError: const FormatException('bad explanation')));
+    addTearDown(malformed.onClose);
+    await expectLater(malformed.readExplanation(),
+        throwsA(isDeviceException(DeviceExceptionKind.invalidResponse)));
+  });
+
   test(
       'simulator requires connection; happy expires and reconnect reads current state',
       () async {

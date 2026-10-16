@@ -1,3 +1,4 @@
+import 'package:xuna_mobile/features/device/domain/entity/learning_explanation.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
 import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
@@ -11,6 +12,9 @@ import 'package:xuna_mobile/features/device/domain/entity/memory_episode.dart';
 /// failure.
 abstract interface class DeviceRepository {
   bool get supportsStatedPreference;
+
+  /// Returns null for firmware without the additive explanation capability.
+  Future<LearningExplanation?> readExplanation();
 
   /// Device state changes. Emits a [DeviceException] error when the
   /// connection drops or a notification is malformed.

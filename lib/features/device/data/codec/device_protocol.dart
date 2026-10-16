@@ -23,6 +23,7 @@ abstract final class DeviceProtocol {
   static const resultBusy = 5;
   static const resultRequestIdConflict = 6;
   static const resultNotReady = 7;
+  static const resultExpired = 8;
 
   static const animationIdle = 0;
   static const animationHappy = 1;

@@ -35,7 +35,8 @@
     "errorRejected": "XUNA từ chối yêu cầu (mã @code).",
     "errorNoPendingSuggestion": "Hãy để XUNA chọn trước khi gửi feedback.",
     "errorInvalidResponse": "Dữ liệu từ XUNA không hợp lệ.",
-    "errorCommunicationFailed": "Không giao tiếp được với XUNA. Hãy thử lại."
+    "errorCommunicationFailed": "Không giao tiếp được với XUNA. Hãy thử lại.",
+    "errorFeedbackExpired": "Đã quá 120 giây để đánh giá phản ứng này. Hãy yêu cầu XUNA chọn lại."
   },
   "home": {
     "navHome": "Nhà",
@@ -189,6 +190,20 @@
     "replyConfirmApproved": "Xác nhận ghi feedback thích cho lựa chọn @action?",
     "replyConfirmRejected": "Xác nhận ghi feedback không thích cho lựa chọn @action?",
     "replyForgotten": "Đã xóa preference và memory.",
-    "replyUnknown": "Mình chỉ hiểu: chơi nhé, nghỉ nhé, thích, không thích. Câu này không được lưu."
+    "replyUnknown": "Mình chỉ hiểu: chơi nhé, nghỉ nhé, thích, không thích. Câu này không được lưu.",
+    "replyExplanationUnavailable": "Mình chưa có dữ liệu giải thích từ thiết bị. Chưa thể xác nhận điều vừa học; bạn có thể hỏi lại “tại sao”.",
+    "replyExplanation": "Dữ liệu từ thiết bị cho @action — @context, @day: @reason. Rating đã ghi: @rated. Bạn đã nói (khối lượng bằng chứng): thích @statedPositive, không thích @statedNegative. Đây là bằng chứng giảm trọng số theo thời gian, không phải số câu đã nói.",
+    "whyHighest": "hành động có ước lượng phù hợp cao nhất",
+    "whyExplore": "lựa chọn khám phá để tìm hiểu thêm",
+    "whyNoEvidence": "chưa có bằng chứng trong ngữ cảnh này",
+    "whyTold": "có bằng chứng từ lời bạn đã xác nhận, chưa có rating",
+    "whyQuiet": "yên tĩnh",
+    "whyPlay": "khi chơi",
+    "whyGreeting": "chào bằng nút",
+    "whyUnknownTime": "chưa dùng buổi trong ngày",
+    "whyMorning": "buổi sáng",
+    "whyAfternoon": "buổi chiều",
+    "whyEvening": "buổi tối",
+    "whyNight": "ban đêm"
   }
 }

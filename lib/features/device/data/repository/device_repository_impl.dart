@@ -1,3 +1,5 @@
+import 'package:xuna_mobile/features/device/domain/entity/learning_explanation.dart';
+import 'package:xuna_mobile/features/device/data/mapper/learning_explanation_mapper.dart';
 import 'dart:async';
 
 import 'package:xuna_mobile/core/domain/repository/base_repository.dart';
@@ -31,6 +33,14 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
   final MemoryEpisodeMapper _memoryMapper;
   @override
   bool get supportsStatedPreference => _dataSource.supportsStatedPreference;
+
+  @override
+  Future<LearningExplanation?> readExplanation() => _guard(() async {
+        final model = await _dataSource.readExplanation();
+        return model == null
+            ? null
+            : LearningExplanationMapper().mapToEntity(model);
+      });
 
   @override
   Stream<DeviceStatus> watchStatus() => _dataSource.statuses.transform(

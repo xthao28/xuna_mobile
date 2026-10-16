@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
+import 'package:xuna_mobile/features/device/domain/usecase/read_learning_explanation_use_case.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -33,11 +36,39 @@ HomeController _buildController(DeviceRepository repository) => HomeController(
       sendFeedback: SendFeedbackUseCase(repository),
       readLifeSummary: ReadLifeSummaryUseCase(repository),
       readMemories: ReadMemoriesUseCase(repository),
+      readExplanation: ReadLearningExplanationUseCase(repository),
       forgetMemories: ForgetMemoriesUseCase(repository),
       parseTextIntent: const ParseTextIntentUseCase(),
       extractCandidate: const ExtractCandidateUseCase(),
       confirmCandidate: ConfirmCandidateUseCase(repository),
     )..isTestMode = true;
+
+class _ExplainedTransport extends SimulatorDeviceBleDataSource {
+  @override
+  Future<LearningExplanationModel?> readExplanation() async =>
+      LearningExplanationModel.decode(Uint8List.fromList([
+        1,
+        20,
+        0,
+        0,
+        1,
+        4,
+        0,
+        0,
+        154,
+        0,
+        128,
+        0,
+        128,
+        0,
+        0,
+        0,
+        128,
+        0,
+        0,
+        0
+      ]));
+}
 
 class _FakeNavigator extends Fake implements AppNavigator {
   final snackBars = <String>[];
@@ -140,6 +171,30 @@ void main() {
     expect((await repository.readLife()).events, 0);
     await controller.confirmTeachingCandidate();
     expect((await repository.readLife()).events, 1);
+  });
+
+  test(
+      'Why on a fake without evidence does not claim learning or send a command',
+      () async {
+    await controller.connect(SimulatorDeviceBleDataSource.deviceId);
+    final before = (await repository.readLife()).events;
+    await controller.submitText('tại sao');
+    expect(lastReply(), LocaleKeys.home_replyExplanationUnavailable.tr);
+    expect((await repository.readLife()).events, before);
+  });
+
+  test('Why grounds its reply in firmware Told fields', () async {
+    Get.addTranslations(AppTranslation.translations);
+    Get.updateLocale(const Locale('vi', 'VN'));
+    final explained = DeviceRepositoryImpl(_ExplainedTransport());
+    final view = _buildController(explained)..onInit();
+    await view.connect(SimulatorDeviceBleDataSource.deviceId);
+    await view.submitText('tại sao');
+    expect(view.messages.last.text, contains('0.50'));
+    expect(view.messages.last.text, contains(LocaleKeys.home_whyTold.tr));
+    expect((await explained.readLife()).events, 0);
+    view.onClose();
+    explained.onClose();
   });
 
   test('device errors become localized status messages', () async {

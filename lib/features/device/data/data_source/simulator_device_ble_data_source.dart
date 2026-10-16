@@ -1,3 +1,4 @@
+import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
 import 'dart:async';
 
 import 'package:xuna_mobile/features/device/data/codec/device_protocol.dart';
@@ -18,6 +19,13 @@ import 'package:xuna_mobile/features/device/domain/exception/device_exception.da
 /// session. Do not add learning rules here (AGENTS §6); conformance with the
 /// firmware is checked by golden vectors in session S20.
 class SimulatorDeviceBleDataSource implements DeviceBleDataSource {
+  // UI fake has no v3 evidence projection; never fabricate a learned reason.
+  @override
+  Future<LearningExplanationModel?> readExplanation() async {
+    _requireConnection();
+    return null;
+  }
+
   @override
   bool get supportsStatedPreference => true;
   SimulatorDeviceBleDataSource({

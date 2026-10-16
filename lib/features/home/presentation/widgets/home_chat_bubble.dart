@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:xuna_mobile/assets.dart';
 import 'package:xuna_mobile/shared/constants/const_src.dart';
 import 'package:xuna_mobile/shared/themes/app_colors.dart';
 import 'package:xuna_mobile/shared/widgets/widget_src.dart';
@@ -67,13 +66,14 @@ class HomeChatBubble extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipOval(
-                  child: Image.asset(
-                    Assets.ASSETS_IMAGES_HERO_PNG,
-                    width: _avatarSize,
-                    height: _avatarSize,
-                    fit: BoxFit.cover,
-                    filterQuality: FilterQuality.none,
+                const ClipOval(
+                  child: ColoredBox(
+                    color: AppColors.xunaCardPressed,
+                    child: AppXunaPet(
+                      width: _avatarSize,
+                      height: _avatarSize,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppDimens.padding10),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:xuna_mobile/features/home/presentation/widgets/home_pet_scene.dart';
 import 'package:get/get.dart';
 import 'package:xuna_mobile/assets.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
@@ -48,11 +49,10 @@ class HomeRoomCard extends StatelessWidget {
           builder: (context, box) => Stack(
             children: [
               Positioned.fill(
-                child: Image.asset(
-                  Assets.ASSETS_IMAGES_RAIN_PNG,
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.none,
-                ),
+                child: HomePetScene(
+                    animation: animation,
+                    connected: connected,
+                    background: AppPetBackground.room),
               ),
               Positioned(
                 left: AppDimens.paddingVerySmall,

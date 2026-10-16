@@ -15,3 +15,5 @@ export 'usecase/scan_devices_use_case.dart';
 export 'usecase/send_feedback_use_case.dart';
 export 'usecase/suggest_action_use_case.dart';
 export 'usecase/watch_device_status_use_case.dart';
+export 'entity/learning_explanation.dart';
+export 'usecase/read_learning_explanation_use_case.dart';

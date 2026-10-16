@@ -141,7 +141,7 @@ abstract final class ProtocolCodec {
     if (bytes.length != _statusLength ||
         bytes[0] != DeviceProtocol.version ||
         bytes[1] > DeviceProtocol.statusStateChange ||
-        bytes[6] > DeviceProtocol.resultNotReady ||
+        bytes[6] > DeviceProtocol.resultExpired ||
         bytes[7] > DeviceProtocol.animationCurious) {
       throw const FormatException('Invalid status');
     }

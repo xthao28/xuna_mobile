@@ -1,3 +1,4 @@
+import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -19,6 +20,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   static const _command = 3;
   static const _status = 4;
   static const _life = 5;
+  static const _explanation = 11;
   static const _memoryPages = [6, 7];
 
   /// FlutterBluePlus GATT operation timeout, in seconds.
@@ -28,8 +30,8 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   static const _scanTimeout = Duration(seconds: 12);
   static const _connectTimeout = Duration(seconds: 10);
 
-  static Guid _uuid(int part) =>
-      Guid('7a6e000$part-8c44-4db6-9f61-2b7d5300a101');
+  static Guid _uuid(int part) => Guid(
+      '7a6e${part.toRadixString(16).padLeft(4, '0')}-8c44-4db6-9f61-2b7d5300a101');
 
   final _statuses = StreamController<DeviceStatusModel>.broadcast();
   final _found = <String, BluetoothDevice>{};
@@ -38,6 +40,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   BluetoothCharacteristic? _commandCharacteristic;
   BluetoothCharacteristic? _statusCharacteristic;
   BluetoothCharacteristic? _lifeCharacteristic;
+  BluetoothCharacteristic? _explanationCharacteristic;
   List<BluetoothCharacteristic> _memoryCharacteristics = [];
   StreamSubscription<List<int>>? _values;
   StreamSubscription<BluetoothConnectionState>? _connection;
@@ -139,6 +142,8 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
           rootException: e,
         );
       }
+      _explanationCharacteristic =
+          _supportsStatedPreference ? characteristic(_explanation) : null;
       _values = _statusCharacteristic!.onValueReceived.listen((bytes) {
         if (epoch != _epoch) return;
         try {
@@ -190,6 +195,15 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   }
 
   @override
+  Future<LearningExplanationModel?> readExplanation() async {
+    if (!_ready) throw const DeviceException(DeviceExceptionKind.notConnected);
+    final characteristic = _explanationCharacteristic;
+    if (characteristic == null) return null;
+    final bytes = await characteristic.read(timeout: _gattTimeout);
+    return LearningExplanationModel.decode(Uint8List.fromList(bytes));
+  }
+
+  @override
   Future<LifeSummaryModel> readLife() async {
     final characteristic = _lifeCharacteristic;
     if (!_ready || characteristic == null) {
@@ -230,6 +244,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
     _commandCharacteristic = null;
     _statusCharacteristic = null;
     _lifeCharacteristic = null;
+    _explanationCharacteristic = null;
     _memoryCharacteristics = [];
     await device?.disconnect();
   }

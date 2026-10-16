@@ -46,7 +46,9 @@ class ResultCorrelator {
       pending.complete(status);
     } else {
       pending.completeError(DeviceException(
-        DeviceExceptionKind.rejected,
+        status.resultCode == DeviceProtocol.resultExpired
+            ? DeviceExceptionKind.feedbackExpired
+            : DeviceExceptionKind.rejected,
         resultCode: status.resultCode,
       ));
     }

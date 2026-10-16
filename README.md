@@ -48,3 +48,41 @@ Connect, request four animations, choose quiet/play, give explicit feedback, ins
 2026-10-13 Clean Architecture refactor (no protocol change): `fvm flutter analyze` clean and 16 protocol/data/domain/controller/widget tests PASS on Flutter 3.32.8 / Windows; no native build or device run after the refactor. Earlier MVP evidence: 10 tests and iPhone13/iOS16.2 simulator debug build/run PASS on Flutter3.32.8/Dart3.8.1/Xcode14.2. Native iOS Bluetooth adapter compiles; physical phone/signing/permissions and Android native validation remain pending. iOS usage description is present. Preserve BSD-style notices for pinned FlutterBluePlus and all resolved subpackages; newer major versions may use different terms.
 
 Parent docs/roadmap/MVP-local.md owns scope, protocol and physical checklist. The previous 24026b2 simulator checkpoint is committed/pushed; subsequent MVP changes are uncommitted until delivery is requested.
+
+### Pet scene assets
+
+The Home room and connected board preview render the device-reported expression
+using `HomePetScene`. Four 3.2-second loops share the firmware's anchored artwork;
+disconnected/reduced-motion views show a still of the last reported state. Animation
+phase is local presentation, not synchronized to the device clock or pet-life state.
+Regenerate with `python3 mobile/tools/export_pet_animation.py` from the superproject
+(Pillow required), after regenerating firmware frames. The eight exported assets
+are checked in so mobile builds do not require the firmware checkout or Python.
+
+`AppXunaPet` in `shared/widgets` is the reusable presentation base: transparent
+portraits for chat, journal and growth placeholders, or room scenes with optional
+animation. `AppPetExpression` is UI-only; `HomePetScene` maps the device enum to it.
+Shared widgets do not depend on feature/domain code. Portraits remain still
+illustrations; they do not claim the current device emotion or growth state.
+
+Backgrounds for Home, Chat and Journal use the code-native 80×60 pixel-grid
+`_PixelBackdrop` in AppXunaPet: room, reading nook and garden. These are decorative
+contexts, not claims about physical location or progression. Transparent pet GIFs
+are exported separately; no detailed generated background images are bundled.
+
+
+### S26/S27-lite learning explanation (source/build only, 2026-10-16)
+
+With firmware advertising capability bit 5 and read characteristic `7a6e000b`,
+confirm a local preference statement, then ask “tại sao” in Chat. The reply
+renders only the device explanation: rated count and stated evidence masses
+are separate; masses are discounted, not counts of statements. No text leaves
+the phone. Old firmware and the UI simulator have no evidence projection and
+show an unavailable response, never an invented learning explanation. A timed
+out confirmed command is not resent; its explanation is read for recovery and
+the outcome remains unknown. Result 8 maps to the 120-second expired message.
+
+The board currently runs the preceding S13/S18 image without bit 5; this
+upgrade has not been uploaded or tested on hardware. Install the compatible
+app before a later firmware rollout that enables result 8. Direct GPIO0
+learning and TimeSync remain separate work.

@@ -20,6 +20,17 @@ DeviceStatusModel _status({
     );
 
 void main() {
+  test('expired result has a specific domain error', () async {
+    final correlator = ResultCorrelator();
+    final result = correlator.begin(1);
+    correlator.accept(_status(
+        kind: DeviceProtocol.statusResult,
+        requestId: 1,
+        resultCode: DeviceProtocol.resultExpired));
+    await expectLater(result,
+        throwsA(isDeviceException(DeviceExceptionKind.feedbackExpired)));
+  });
+
   test(
       'matches only command result ID, rejects concurrent request, clears on disconnect',
       () async {

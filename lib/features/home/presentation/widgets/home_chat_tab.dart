@@ -85,12 +85,11 @@ class HomeChatTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Image.asset(
-                    Assets.ASSETS_IMAGES_HERO_PNG,
+                  const AppXunaPet(
+                    background: AppPetBackground.reading,
                     width: _heroWidth,
                     height: _heroHeight,
                     fit: BoxFit.contain,
-                    filterQuality: FilterQuality.none,
                   ),
                   SizedBox(
                     width: _sideNoteWidth,

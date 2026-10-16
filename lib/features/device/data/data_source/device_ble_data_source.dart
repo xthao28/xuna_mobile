@@ -1,3 +1,4 @@
+import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
@@ -10,6 +11,9 @@ import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart
 /// leaves other errors to the repository.
 abstract interface class DeviceBleDataSource {
   bool get supportsStatedPreference;
+
+  /// Returns null for firmware without the additive explanation capability.
+  Future<LearningExplanationModel?> readExplanation();
 
   /// Status notifications, including command results. Errors are emitted
   /// when the connection drops or a frame is malformed.

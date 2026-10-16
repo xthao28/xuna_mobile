@@ -11,3 +11,4 @@ export 'app_status_dot.dart';
 export 'app_tag.dart';
 export 'app_toggle.dart';
 export 'utils_widget.dart';
+export 'app_xuna_pet.dart';

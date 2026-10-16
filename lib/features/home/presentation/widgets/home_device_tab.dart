@@ -87,6 +87,7 @@ class HomeDeviceTab extends StatelessWidget {
         ],
         const SizedBox(height: AppDimens.defaultPadding),
         HomeBoardIllustration(
+          animation: animation,
           connected: connected,
           isBusy: isBusy,
           statusColor: _statusColor(),

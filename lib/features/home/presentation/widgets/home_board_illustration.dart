@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:xuna_mobile/assets.dart';
+import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
+import 'package:xuna_mobile/features/home/presentation/widgets/home_pet_scene.dart';
 import 'package:xuna_mobile/generated/locales.g.dart';
 import 'package:xuna_mobile/shared/constants/const_src.dart';
 import 'package:xuna_mobile/shared/themes/app_colors.dart';
@@ -11,6 +12,7 @@ class HomeBoardIllustration extends StatelessWidget {
   const HomeBoardIllustration({
     super.key,
     required this.connected,
+    required this.animation,
     required this.isBusy,
     required this.statusColor,
   });
@@ -25,6 +27,7 @@ class HomeBoardIllustration extends StatelessWidget {
   static const _dotSize = 20.0;
 
   final bool connected;
+  final AnimationState animation;
   final bool isBusy;
   final Color statusColor;
 
@@ -143,12 +146,7 @@ class HomeBoardIllustration extends StatelessWidget {
   Widget _buildScreen() {
     final Widget content;
     if (connected) {
-      content = Image.asset(
-        Assets.ASSETS_IMAGES_RAIN_PNG,
-        fit: BoxFit.cover,
-        alignment: const Alignment(0, 0.4),
-        filterQuality: FilterQuality.none,
-      );
+      content = HomePetScene(animation: animation, connected: connected);
     } else {
       content = Center(
         child: Text(

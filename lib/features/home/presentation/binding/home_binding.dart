@@ -39,6 +39,7 @@ class HomeBinding extends BaseBindings {
     Get.lazyPut(() => SendFeedbackUseCase(sl()));
     Get.lazyPut(() => ReadLifeSummaryUseCase(sl()));
     Get.lazyPut(() => ReadMemoriesUseCase(sl()));
+    Get.lazyPut(() => ReadLearningExplanationUseCase(sl()));
     Get.lazyPut(() => ForgetMemoriesUseCase(sl()));
     Get.lazyPut(() => const ParseTextIntentUseCase());
     Get.lazyPut(() => const ExtractCandidateUseCase());
@@ -59,6 +60,7 @@ class HomeBinding extends BaseBindings {
         sendFeedback: sl(),
         readLifeSummary: sl(),
         readMemories: sl(),
+        readExplanation: sl(),
         forgetMemories: sl(),
         parseTextIntent: sl(),
         extractCandidate: sl(),

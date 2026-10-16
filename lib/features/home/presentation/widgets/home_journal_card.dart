@@ -100,12 +100,11 @@ class HomeJournalCard extends StatelessWidget {
                           width: AppDimens.stroke2,
                         ),
                       ),
-                      child: Image.asset(
-                        learned
-                            ? Assets.ASSETS_IMAGES_LEARN_PNG
-                            : Assets.ASSETS_IMAGES_RAIN_PNG,
-                        fit: BoxFit.cover,
-                        filterQuality: FilterQuality.none,
+                      child: AppXunaPet(
+                        background: AppPetBackground.garden,
+                        expression: learned
+                            ? AppPetExpression.curious
+                            : AppPetExpression.idle,
                       ),
                     ),
                   ],

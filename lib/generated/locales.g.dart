@@ -200,6 +200,22 @@ class LocaleKeys {
   static const home_replyNeedContext = 'home_replyNeedContext';
   static const home_replyStatedUnsupported = 'home_replyStatedUnsupported';
   static const home_replyConfirmTeaching = 'home_replyConfirmTeaching';
+  static const home_replyExplanationUnavailable =
+      'home_replyExplanationUnavailable';
+  static const home_replyExplanation = 'home_replyExplanation';
+  static const home_whyHighest = 'home_whyHighest';
+  static const home_whyExplore = 'home_whyExplore';
+  static const home_whyNoEvidence = 'home_whyNoEvidence';
+  static const home_whyTold = 'home_whyTold';
+  static const home_whyQuiet = 'home_whyQuiet';
+  static const home_whyPlay = 'home_whyPlay';
+  static const home_whyGreeting = 'home_whyGreeting';
+  static const home_whyUnknownTime = 'home_whyUnknownTime';
+  static const home_whyMorning = 'home_whyMorning';
+  static const home_whyAfternoon = 'home_whyAfternoon';
+  static const home_whyEvening = 'home_whyEvening';
+  static const home_whyNight = 'home_whyNight';
+  static const device_errorFeedbackExpired = 'device_errorFeedbackExpired';
   static const home_replyTeachingApplied = 'home_replyTeachingApplied';
 }
 
@@ -398,6 +414,24 @@ class Locales {
     'home_replyStatedUnsupported':
         'XUNA chua ho tro ghi so thich tu tro chuyen.',
     'home_replyConfirmTeaching': 'Xac nhan day la dieu ban vua noi voi XUNA.',
+    'home_replyExplanationUnavailable':
+        'Mình chưa có dữ liệu giải thích từ thiết bị. Chưa thể xác nhận điều vừa học; bạn có thể hỏi lại “tại sao”.',
+    'home_replyExplanation':
+        'Dữ liệu từ thiết bị cho @action — @context, @day: @reason. Rating đã ghi: @rated. Bạn đã nói (khối lượng bằng chứng): thích @statedPositive, không thích @statedNegative. Đây là bằng chứng giảm trọng số theo thời gian, không phải số câu đã nói.',
+    'home_whyHighest': 'hành động có ước lượng phù hợp cao nhất',
+    'home_whyExplore': 'lựa chọn khám phá để tìm hiểu thêm',
+    'home_whyNoEvidence': 'chưa có bằng chứng trong ngữ cảnh này',
+    'home_whyTold': 'có bằng chứng từ lời bạn đã xác nhận, chưa có rating',
+    'home_whyQuiet': 'yên tĩnh',
+    'home_whyPlay': 'khi chơi',
+    'home_whyGreeting': 'chào bằng nút',
+    'home_whyUnknownTime': 'chưa dùng buổi trong ngày',
+    'home_whyMorning': 'buổi sáng',
+    'home_whyAfternoon': 'buổi chiều',
+    'home_whyEvening': 'buổi tối',
+    'home_whyNight': 'ban đêm',
+    'device_errorFeedbackExpired':
+        'Đã quá 120 giây để đánh giá phản ứng này. Hãy yêu cầu XUNA chọn lại.',
     'home_replyTeachingApplied': 'Minh da ghi dieu ban vua xac nhan.',
     'home_infoProtocolValue': 'XUNA local v1',
     'home_infoNote': 'Thiết bị hiện chưa có loa, micro hay pin theo dõi được.',
