@@ -1,6 +1,5 @@
-import 'package:xuna_mobile/features/home/presentation/binding/home_binding.dart';
-import 'package:xuna_mobile/features/home/presentation/home_page.dart';
-import 'package:xuna_mobile/features/splash/splash_page.dart';
+import 'package:xuna_mobile/features/home/home.src.dart';
+import 'package:xuna_mobile/features/splash/splash.src.dart';
 import 'package:xuna_mobile/routes/app_routes.dart';
 import 'package:get/get.dart';
 
