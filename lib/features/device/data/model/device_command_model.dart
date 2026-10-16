@@ -7,6 +7,8 @@ class DeviceCommandModel {
     required this.argument,
     this.source = DeviceProtocol.sourceNone,
     this.target = 0,
+    this.utcSeconds = 0,
+    this.timezoneOffsetMinutes = 0,
   });
 
   const DeviceCommandModel.animation(int animationCode)
@@ -30,6 +32,16 @@ class DeviceCommandModel {
   const DeviceCommandModel.forget()
       : this(opcode: DeviceProtocol.opcodeForget, argument: 0);
 
+  const DeviceCommandModel.timeSync({
+    required int utcSeconds,
+    required int timezoneOffsetMinutes,
+  }) : this(
+          opcode: DeviceProtocol.opcodeTimeSync,
+          argument: DeviceProtocol.sourcePhone,
+          utcSeconds: utcSeconds,
+          timezoneOffsetMinutes: timezoneOffsetMinutes,
+        );
+
   const DeviceCommandModel.statedPreference(
       {required bool likes, required int contextKey, required int action})
       : this(
@@ -38,8 +50,13 @@ class DeviceCommandModel {
             source: DeviceProtocol.sourceText,
             target: (action << 8) | contextKey);
 
+  const DeviceCommandModel.hatch()
+      : this(opcode: DeviceProtocol.opcodeHatch, argument: 0);
+
   final int opcode;
   final int argument;
   final int source;
   final int target;
+  final int utcSeconds;
+  final int timezoneOffsetMinutes;
 }

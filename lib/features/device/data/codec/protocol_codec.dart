@@ -4,6 +4,7 @@ import 'package:xuna_mobile/features/device/data/codec/device_protocol.dart';
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
+import 'package:xuna_mobile/features/device/data/model/lifecycle_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
 
 /// Binary codec for XUNA BLE protocol v1. Every method throws
@@ -11,18 +12,24 @@ import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart
 abstract final class ProtocolCodec {
   static const _commandLength = 8;
   static const _feedbackCommandLength = 12;
+  static const _timeSyncCommandLength = 16;
   static const _capabilitiesLength = 8;
   static const _statusLength = 16;
   static const _lifeLength = 20;
   static const _memoryPageLength = 20;
+  static const _lifecycleLength = 8;
   static const _episodesPerPage = 4;
 
   static Uint8List encode(int requestId, DeviceCommandModel command) {
     _validate(requestId, command);
     final isFeedback = command.opcode == DeviceProtocol.opcodeFeedback;
     final isStated = command.opcode == DeviceProtocol.opcodeStatedPreference;
-    final bytes = Uint8List(
-        isFeedback || isStated ? _feedbackCommandLength : _commandLength)
+    final isTimeSync = command.opcode == DeviceProtocol.opcodeTimeSync;
+    final bytes = Uint8List(isTimeSync
+        ? _timeSyncCommandLength
+        : isFeedback || isStated
+            ? _feedbackCommandLength
+            : _commandLength)
       ..[0] = DeviceProtocol.version
       ..[1] = command.opcode
       ..[6] = command.argument
@@ -34,6 +41,11 @@ abstract final class ProtocolCodec {
       bytes[8] = command.target & 0xff;
       bytes[9] = (command.target >> 8) & 0xff;
     }
+    if (isTimeSync) {
+      data
+        ..setUint32(8, command.utcSeconds, Endian.little)
+        ..setInt16(12, command.timezoneOffsetMinutes, Endian.little);
+    }
     return bytes;
   }
 
@@ -44,11 +56,19 @@ abstract final class ProtocolCodec {
     }
     final isFeedback = bytes[1] == DeviceProtocol.opcodeFeedback;
     final isStated = bytes[1] == DeviceProtocol.opcodeStatedPreference;
+    final isTimeSync = bytes[1] == DeviceProtocol.opcodeTimeSync;
     if (bytes.length !=
-        (isFeedback || isStated ? _feedbackCommandLength : _commandLength)) {
+        (isTimeSync
+            ? _timeSyncCommandLength
+            : isFeedback || isStated
+                ? _feedbackCommandLength
+                : _commandLength)) {
       throw const FormatException('Invalid command');
     }
     final data = ByteData.sublistView(bytes);
+    if (isTimeSync && (bytes[7] != 0 || bytes[14] != 0 || bytes[15] != 0)) {
+      throw const FormatException('Invalid command');
+    }
     final requestId = data.getUint32(2, Endian.little);
     final command = DeviceCommandModel(
       opcode: bytes[1],
@@ -59,6 +79,8 @@ abstract final class ProtocolCodec {
           : isStated
               ? bytes[8] | (bytes[9] << 8)
               : 0,
+      utcSeconds: isTimeSync ? data.getUint32(8, Endian.little) : 0,
+      timezoneOffsetMinutes: isTimeSync ? data.getInt16(12, Endian.little) : 0,
     );
     _validate(requestId, command);
     return (requestId, command);
@@ -80,6 +102,39 @@ abstract final class ProtocolCodec {
   static bool supportsStatedPreference(Uint8List bytes) {
     validateCapabilities(bytes);
     return (bytes[2] & DeviceProtocol.capabilityStatedPreference) != 0;
+  }
+
+  static bool supportsTimeSync(Uint8List bytes) {
+    validateCapabilities(bytes);
+    return (bytes[2] & DeviceProtocol.capabilityTimeSync) != 0;
+  }
+
+  static bool supportsHatch(Uint8List bytes) {
+    validateCapabilities(bytes);
+    return (bytes[2] & DeviceProtocol.capabilityHatch) != 0;
+  }
+
+  static LifecycleModel decodeLifecycle(Uint8List bytes) {
+    if (bytes.length != _lifecycleLength ||
+        bytes[0] != DeviceProtocol.version ||
+        bytes[1] != _lifecycleLength ||
+        bytes[2] > 2 ||
+        bytes[3] > 1 ||
+        bytes[4] > 2 ||
+        (bytes[5] != 0 && bytes[5] != 2) ||
+        bytes[6] > 3 ||
+        (bytes[7] & 0xfe) != 0 ||
+        ((bytes[7] & 1) != 0) != (bytes[5] == 2)) {
+      throw const FormatException('Invalid lifecycle');
+    }
+    return LifecycleModel(
+      identityState: bytes[2],
+      growthStage: bytes[3],
+      clockQuality: bytes[4],
+      bornAtQuality: bytes[5],
+      origin: bytes[6],
+      hasBornAt: (bytes[7] & 1) != 0,
+    );
   }
 
   static DeviceStatusModel decodeStatus(Uint8List bytes) {
@@ -179,9 +234,18 @@ abstract final class ProtocolCodec {
               command.target <= DeviceProtocol.maxRequestId,
           DeviceProtocol.opcodeForget =>
             argument == 0 && source == DeviceProtocol.sourceNone,
+          DeviceProtocol.opcodeTimeSync =>
+            argument == DeviceProtocol.sourcePhone &&
+                source == DeviceProtocol.sourceNone &&
+                command.utcSeconds > 0 &&
+                command.utcSeconds <= DeviceProtocol.maxRequestId &&
+                command.timezoneOffsetMinutes >= -840 &&
+                command.timezoneOffsetMinutes <= 840,
           DeviceProtocol.opcodeStatedPreference => argument <= 1 &&
               source == DeviceProtocol.sourceText &&
               bytesTargetValid(command.target),
+          DeviceProtocol.opcodeHatch =>
+            argument == 0 && source == DeviceProtocol.sourceNone,
           _ => false,
         };
     if (!valid) throw const FormatException('Invalid command arguments');

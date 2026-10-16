@@ -95,4 +95,93 @@ void main() {
         ),
         isFalse);
   });
+
+  test('time sync and hatch use frozen command layouts', () {
+    final sync = ProtocolCodec.encode(
+      0x12345678,
+      const DeviceCommandModel.timeSync(
+        utcSeconds: 1700000000,
+        timezoneOffsetMinutes: 420,
+      ),
+    );
+    expect(sync, [
+      1,
+      5,
+      0x78,
+      0x56,
+      0x34,
+      0x12,
+      1,
+      0,
+      0x00,
+      0xf1,
+      0x53,
+      0x65,
+      0xa4,
+      0x01,
+      0,
+      0,
+    ]);
+    final decoded = ProtocolCodec.decodeCommand(sync).$2;
+    expect(decoded.utcSeconds, 1700000000);
+    expect(decoded.timezoneOffsetMinutes, 420);
+    expect(
+      ProtocolCodec.encode(9, const DeviceCommandModel.hatch()),
+      [1, 7, 9, 0, 0, 0, 0, 0],
+    );
+  });
+
+  test('time sync validates timestamp, timezone and reserved bytes', () {
+    expect(
+      () => ProtocolCodec.encode(
+        1,
+        const DeviceCommandModel.timeSync(
+          utcSeconds: 0,
+          timezoneOffsetMinutes: 0,
+        ),
+      ),
+      throwsFormatException,
+    );
+    final badReserved = Uint8List.fromList([
+      1,
+      5,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ]);
+    expect(
+        () => ProtocolCodec.decodeCommand(badReserved), throwsFormatException);
+  });
+
+  test('lifecycle projection has frozen layout and strict validation', () {
+    final lifecycle = ProtocolCodec.decodeLifecycle(
+      Uint8List.fromList([1, 8, 1, 1, 2, 2, 2, 1]),
+    );
+    expect(lifecycle.identityState, 1);
+    expect(lifecycle.hasBornAt, isTrue);
+    expect(
+      () => ProtocolCodec.decodeLifecycle(
+        Uint8List.fromList([1, 8, 1, 1, 2, 0, 2, 1]),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('time sync and hatch capability bits are independent', () {
+    final capabilities = Uint8List.fromList([1, 8, 0x5f, 0, 15, 3, 0, 0]);
+    expect(ProtocolCodec.supportsTimeSync(capabilities), isTrue);
+    expect(ProtocolCodec.supportsHatch(capabilities), isTrue);
+    expect(ProtocolCodec.supportsStatedPreference(capabilities), isFalse);
+  });
 }
