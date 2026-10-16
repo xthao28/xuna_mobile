@@ -9,6 +9,8 @@ import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart
 /// simulator. Throws `DeviceException` for protocol conditions it detects and
 /// leaves other errors to the repository.
 abstract interface class DeviceBleDataSource {
+  bool get supportsStatedPreference;
+
   /// Status notifications, including command results. Errors are emitted
   /// when the connection drops or a frame is malformed.
   Stream<DeviceStatusModel> get statuses;

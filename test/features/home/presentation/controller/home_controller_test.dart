@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:xuna_mobile/core/presentation/navigation/navigation_src.dart';
 import 'package:xuna_mobile/features/conversation/domain/usecase/parse_text_intent_use_case.dart';
+import 'package:xuna_mobile/features/conversation/domain/usecase/extract_candidate_use_case.dart';
+import 'package:xuna_mobile/features/conversation/domain/usecase/confirm_candidate_use_case.dart';
 import 'package:xuna_mobile/features/device/data/data_source/simulator_device_ble_data_source.dart';
 import 'package:xuna_mobile/features/device/data/repository/device_repository_impl.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
@@ -33,6 +35,8 @@ HomeController _buildController(DeviceRepository repository) => HomeController(
       readMemories: ReadMemoriesUseCase(repository),
       forgetMemories: ForgetMemoriesUseCase(repository),
       parseTextIntent: const ParseTextIntentUseCase(),
+      extractCandidate: const ExtractCandidateUseCase(),
+      confirmCandidate: ConfirmCandidateUseCase(repository),
     )..isTestMode = true;
 
 class _FakeNavigator extends Fake implements AppNavigator {
@@ -124,6 +128,18 @@ void main() {
     expect(controller.tab.value, HomeTab.device);
     await controller.disconnect();
     expect(controller.connectedDevice.value, isNull);
+  });
+
+  test('stated preference waits for context and confirmation', () async {
+    await controller.connect(SimulatorDeviceBleDataSource.deviceId);
+    await controller
+        .submitText('m\u00ecnh th\u00edch khi b\u1ea1n t\u00f2 m\u00f2');
+    expect((await repository.readLife()).events, 0);
+    await controller.submitText('khi ch\u01a1i');
+    expect(controller.candidateReview.value, contains('user_stated'));
+    expect((await repository.readLife()).events, 0);
+    await controller.confirmTeachingCandidate();
+    expect((await repository.readLife()).events, 1);
   });
 
   test('device errors become localized status messages', () async {

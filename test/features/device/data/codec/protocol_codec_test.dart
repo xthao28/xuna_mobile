@@ -72,4 +72,27 @@ void main() {
     expect(
         () => ProtocolCodec.decodeLife(Uint8List(19)), throwsFormatException);
   });
+
+  test('stated preference has frozen layout and capability bit', () {
+    final frame = ProtocolCodec.encode(
+      9,
+      const DeviceCommandModel.statedPreference(
+        likes: true,
+        contextKey: 0x14,
+        action: DeviceProtocol.animationCurious,
+      ),
+    );
+    expect(frame, [1, 6, 9, 0, 0, 0, 1, 2, 0x14, 3, 0, 0]);
+    expect(ProtocolCodec.decodeCommand(frame).$2.target, 0x314);
+    expect(
+        ProtocolCodec.supportsStatedPreference(
+          Uint8List.fromList([1, 8, 0x2f, 0, 15, 3, 0, 0]),
+        ),
+        isTrue);
+    expect(
+        ProtocolCodec.supportsStatedPreference(
+          Uint8List.fromList([1, 8, 0x0f, 0, 15, 3, 0, 0]),
+        ),
+        isFalse);
+  });
 }

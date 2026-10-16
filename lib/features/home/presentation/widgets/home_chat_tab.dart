@@ -17,6 +17,7 @@ class HomeChatTab extends StatelessWidget {
     required this.connected,
     required this.isBusy,
     required this.candidate,
+    required this.candidateReview,
     required this.onBack,
     required this.onMenu,
     required this.onSubmit,
@@ -34,6 +35,7 @@ class HomeChatTab extends StatelessWidget {
   final bool connected;
   final bool isBusy;
   final bool? candidate;
+  final String? candidateReview;
   final VoidCallback onBack;
   final VoidCallback onMenu;
   final ValueChanged<String> onSubmit;
@@ -128,6 +130,7 @@ class HomeChatTab extends StatelessWidget {
         HomeChatComposer(
           isBusy: isBusy,
           candidate: candidate,
+          candidateReview: candidateReview,
           onSubmit: onSubmit,
           onConfirmCandidate: onConfirmCandidate,
           onCancelCandidate: onCancelCandidate,

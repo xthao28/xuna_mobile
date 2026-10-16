@@ -5,6 +5,10 @@ import 'package:xuna_mobile/core/presentation/controllers/base_getx_controller.d
 import 'package:xuna_mobile/core/presentation/navigation/snack_bar_type.dart';
 import 'package:xuna_mobile/features/conversation/domain/entity/text_intent.dart';
 import 'package:xuna_mobile/features/conversation/domain/usecase/parse_text_intent_use_case.dart';
+import 'package:xuna_mobile/features/conversation/domain/entity/candidate_event.dart';
+import 'package:xuna_mobile/features/conversation/domain/entity/extraction_result.dart';
+import 'package:xuna_mobile/features/conversation/domain/usecase/extract_candidate_use_case.dart';
+import 'package:xuna_mobile/features/conversation/domain/usecase/confirm_candidate_use_case.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
 import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
@@ -47,6 +51,8 @@ class HomeController extends BaseGetxController {
     required ReadMemoriesUseCase readMemories,
     required ForgetMemoriesUseCase forgetMemories,
     required ParseTextIntentUseCase parseTextIntent,
+    required ExtractCandidateUseCase extractCandidate,
+    required ConfirmCandidateUseCase confirmCandidate,
   })  : _scanDevices = scanDevices,
         _connectDevice = connectDevice,
         _disconnectDevice = disconnectDevice,
@@ -57,7 +63,9 @@ class HomeController extends BaseGetxController {
         _readLifeSummary = readLifeSummary,
         _readMemories = readMemories,
         _forgetMemories = forgetMemories,
-        _parseTextIntent = parseTextIntent;
+        _parseTextIntent = parseTextIntent,
+        _extractCandidate = extractCandidate,
+        _confirmCandidate = confirmCandidate;
 
   /// The development fake transport is in use; the page must label it.
   final bool isSimulator;
@@ -73,6 +81,8 @@ class HomeController extends BaseGetxController {
   final ReadMemoriesUseCase _readMemories;
   final ForgetMemoriesUseCase _forgetMemories;
   final ParseTextIntentUseCase _parseTextIntent;
+  final ExtractCandidateUseCase _extractCandidate;
+  final ConfirmCandidateUseCase _confirmCandidate;
 
   /// Oldest messages are dropped beyond this many lines.
   static const maxMessages = 40;
@@ -95,6 +105,9 @@ class HomeController extends BaseGetxController {
 
   /// Text feedback awaiting confirmation: true approves, false rejects.
   final candidate = Rxn<bool>();
+  final teachingCandidate = Rxn<CandidateEvent>();
+  final pendingContextCandidate = Rxn<CandidateEvent>();
+  final candidateReview = RxnString();
 
   StreamSubscription<DeviceStatus>? _statusSubscription;
 
@@ -197,6 +210,33 @@ class HomeController extends BaseGetxController {
       _say(LocaleKeys.home_replyNeedConnection.tr);
       return;
     }
+    final extraction = _extractCandidate.execute(input);
+    final pendingContext = pendingContextCandidate.value;
+    if (pendingContext != null) {
+      final context = _extractCandidate.resolveContext(input);
+      if (context == null) {
+        _say(LocaleKeys.home_replyNeedContext.tr);
+        return;
+      }
+      pendingContextCandidate.value = null;
+      _prepareCandidate(pendingContext.withContext(context));
+      return;
+    }
+    if (extraction.outcome == ExtractionOutcome.needsContext) {
+      pendingContextCandidate.value = extraction.candidate;
+      _say(LocaleKeys.home_replyNeedContext.tr);
+      return;
+    }
+    final event = extraction.candidate;
+    if (event != null && event.requiresConfirmation) {
+      if (event.type == CandidateType.statePreference &&
+          !_confirmCandidate.supportsStatedPreference) {
+        _say(LocaleKeys.home_replyStatedUnsupported.tr);
+        return;
+      }
+      _prepareCandidate(event);
+      return;
+    }
     final intent = _parseTextIntent.execute(input);
     switch (intent) {
       case TextIntent.play:
@@ -220,7 +260,33 @@ class HomeController extends BaseGetxController {
     }
   }
 
-  void cancelCandidate() => candidate.value = null;
+  void cancelCandidate() {
+    candidate.value = null;
+    teachingCandidate.value = null;
+    pendingContextCandidate.value = null;
+    candidateReview.value = null;
+  }
+
+  Future<void> confirmTeachingCandidate() => _run(() async {
+        final event = teachingCandidate.value;
+        if (event == null) return;
+        await _confirmCandidate.execute(event);
+        teachingCandidate.value = null;
+        candidate.value = null;
+        candidateReview.value = null;
+        await _refreshLife();
+        _say(LocaleKeys.home_replyTeachingApplied.tr);
+      });
+
+  void _prepareCandidate(CandidateEvent event) {
+    teachingCandidate.value = event;
+    candidate.value = event.polarity == PreferencePolarity.like;
+    candidateReview.value = event.type == CandidateType.statePreference
+        ? '${event.polarity!.name} | ${event.action!.label} | ${event.context!.name} | ${event.dayPart.name} | user_stated'
+        : '${event.polarity!.name} | reaction ${life.value.decisionId} | user_feedback';
+    _say(LocaleKeys.home_replyConfirmTeaching
+        .trParams({'details': candidateReview.value!}));
+  }
 
   void selectTab(HomeTab value) => tab.value = value;
 

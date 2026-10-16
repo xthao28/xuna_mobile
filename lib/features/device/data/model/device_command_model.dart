@@ -30,6 +30,14 @@ class DeviceCommandModel {
   const DeviceCommandModel.forget()
       : this(opcode: DeviceProtocol.opcodeForget, argument: 0);
 
+  const DeviceCommandModel.statedPreference(
+      {required bool likes, required int contextKey, required int action})
+      : this(
+            opcode: DeviceProtocol.opcodeStatedPreference,
+            argument: likes ? 1 : 0,
+            source: DeviceProtocol.sourceText,
+            target: (action << 8) | contextKey);
+
   final int opcode;
   final int argument;
   final int source;

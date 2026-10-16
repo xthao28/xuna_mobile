@@ -23,6 +23,15 @@ class ExtractCandidateUseCase extends UseCase<String, ExtractionResult> {
 
   static const maxInputLength = 120;
 
+  /// Resolves the single follow-up answer requested for a statement that
+  /// omitted its interaction context. Unknown answers send nothing.
+  PreferenceContext? resolveContext(String input) {
+    final tokens = input.toLowerCase().trim().split(RegExp(r'\s+'));
+    final matches =
+        _takeAll(tokens, List<bool>.filled(tokens.length, false), _contexts);
+    return matches.toSet().length == 1 ? matches.first : null;
+  }
+
   static const _quoteMarks = ['"', "'", '“', '”', '‘', '’', '«', '»', '`'];
   static const _instructionMarks = [':', '{', '}', '<', '>', '=', '\\', '#'];
   static const _instructionPhrases = [

@@ -10,6 +10,8 @@ import 'package:xuna_mobile/features/device/domain/entity/memory_episode.dart';
 /// requests, reads and confirms. Every method throws [DeviceException] on
 /// failure.
 abstract interface class DeviceRepository {
+  bool get supportsStatedPreference;
+
   /// Device state changes. Emits a [DeviceException] error when the
   /// connection drops or a notification is malformed.
   Stream<DeviceStatus> watchStatus();
@@ -39,6 +41,10 @@ abstract interface class DeviceRepository {
 
   /// Deletes the learned preference and memories on the device.
   Future<void> forget();
+  Future<void> statePreference(
+      {required bool likes,
+      required int contextKey,
+      required AnimationState action});
 
   Future<void> disconnect();
 }

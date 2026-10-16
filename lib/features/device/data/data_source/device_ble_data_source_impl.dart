@@ -46,6 +46,9 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   /// Incremented on every connect/disconnect so stale callbacks are ignored.
   int _epoch = 0;
   bool _ready = false;
+  bool _supportsStatedPreference = false;
+  @override
+  bool get supportsStatedPreference => _supportsStatedPreference;
 
   @override
   Stream<DeviceStatusModel> get statuses => _statuses.stream;
@@ -127,6 +130,9 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
           await characteristic(_capabilities).read(timeout: _gattTimeout);
       try {
         ProtocolCodec.validateCapabilities(Uint8List.fromList(capabilities));
+        _supportsStatedPreference = ProtocolCodec.supportsStatedPreference(
+          Uint8List.fromList(capabilities),
+        );
       } on FormatException catch (e) {
         throw DeviceException(
           DeviceExceptionKind.unsupportedDevice,
@@ -213,6 +219,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   Future<void> disconnect() async {
     ++_epoch;
     _ready = false;
+    _supportsStatedPreference = false;
     _results.cancel(const DeviceException(DeviceExceptionKind.disconnected));
     await _values?.cancel();
     await _connection?.cancel();

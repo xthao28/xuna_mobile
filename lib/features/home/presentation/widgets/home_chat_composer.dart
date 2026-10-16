@@ -14,6 +14,7 @@ class HomeChatComposer extends StatefulWidget {
     super.key,
     required this.isBusy,
     required this.candidate,
+    required this.candidateReview,
     required this.onSubmit,
     required this.onConfirmCandidate,
     required this.onCancelCandidate,
@@ -29,6 +30,7 @@ class HomeChatComposer extends StatefulWidget {
 
   /// Feedback awaiting confirmation: true approves, false rejects.
   final bool? candidate;
+  final String? candidateReview;
   final ValueChanged<String> onSubmit;
   final ValueChanged<bool> onConfirmCandidate;
   final VoidCallback onCancelCandidate;
@@ -109,22 +111,30 @@ class _HomeChatComposerState extends State<HomeChatComposer> {
               AppDimens.padding18,
               AppDimens.paddingVerySmall,
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: AppBoxButton(
-                    label: LocaleKeys.home_confirmFeedback.tr,
-                    highlighted: true,
-                    onPressed: widget.isBusy
-                        ? null
-                        : () => widget.onConfirmCandidate(pending),
+                if (widget.candidateReview != null) ...[
+                  Text(widget.candidateReview!,
+                      style: AppTextStyle.mono11Re, maxLines: 4),
+                  const SizedBox(height: AppDimens.paddingVerySmall),
+                ],
+                Row(children: [
+                  Expanded(
+                    child: AppBoxButton(
+                      label: LocaleKeys.home_confirmFeedback.tr,
+                      highlighted: true,
+                      onPressed: widget.isBusy
+                          ? null
+                          : () => widget.onConfirmCandidate(pending),
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppDimens.padding10),
-                AppBoxButton(
-                  label: LocaleKeys.dialog_cancel.tr,
-                  onPressed: widget.onCancelCandidate,
-                ),
+                  const SizedBox(width: AppDimens.padding10),
+                  AppBoxButton(
+                    label: LocaleKeys.dialog_cancel.tr,
+                    onPressed: widget.onCancelCandidate,
+                  ),
+                ]),
               ],
             ),
           ),

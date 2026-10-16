@@ -96,11 +96,14 @@ class HomePage extends BaseGetPage<HomeController> {
           connected: controller.connected.value,
           isBusy: controller.isBusy,
           candidate: controller.candidate.value,
+          candidateReview: controller.candidateReview.value,
           onBack: () => controller.selectTab(HomeTab.home),
           onMenu: _openChatMenu,
           onSubmit: controller.submitText,
           onConfirmCandidate: (approved) =>
-              controller.feedback(approved, fromText: true),
+              controller.teachingCandidate.value != null
+                  ? controller.confirmTeachingCandidate()
+                  : controller.feedback(approved, fromText: true),
           onCancelCandidate: controller.cancelCandidate,
           onComingSoon: controller.showComingSoon,
         ),

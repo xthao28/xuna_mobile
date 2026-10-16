@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:xuna_mobile/core/presentation/bindings/base_bindings.dart';
 import 'package:xuna_mobile/features/conversation/domain/usecase/parse_text_intent_use_case.dart';
+import 'package:xuna_mobile/features/conversation/domain/usecase/extract_candidate_use_case.dart';
+import 'package:xuna_mobile/features/conversation/domain/usecase/confirm_candidate_use_case.dart';
 import 'package:xuna_mobile/features/device/data/data_source/device_ble_data_source.dart';
 import 'package:xuna_mobile/features/device/data/data_source/device_ble_data_source_impl.dart';
 import 'package:xuna_mobile/features/device/data/data_source/simulator_device_ble_data_source.dart';
@@ -54,6 +56,8 @@ class HomeBinding extends BaseBindings {
     Get.lazyPut(() => ReadMemoriesUseCase(sl()));
     Get.lazyPut(() => ForgetMemoriesUseCase(sl()));
     Get.lazyPut(() => const ParseTextIntentUseCase());
+    Get.lazyPut(() => const ExtractCandidateUseCase());
+    Get.lazyPut(() => ConfirmCandidateUseCase(sl()));
   }
 
   @override
@@ -72,6 +76,8 @@ class HomeBinding extends BaseBindings {
         readMemories: sl(),
         forgetMemories: sl(),
         parseTextIntent: sl(),
+        extractCandidate: sl(),
+        confirmCandidate: sl(),
       ),
     );
   }

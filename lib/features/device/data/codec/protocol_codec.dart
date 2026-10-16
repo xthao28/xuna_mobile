@@ -20,15 +20,20 @@ abstract final class ProtocolCodec {
   static Uint8List encode(int requestId, DeviceCommandModel command) {
     _validate(requestId, command);
     final isFeedback = command.opcode == DeviceProtocol.opcodeFeedback;
-    final bytes =
-        Uint8List(isFeedback ? _feedbackCommandLength : _commandLength)
-          ..[0] = DeviceProtocol.version
-          ..[1] = command.opcode
-          ..[6] = command.argument
-          ..[7] = command.source;
+    final isStated = command.opcode == DeviceProtocol.opcodeStatedPreference;
+    final bytes = Uint8List(
+        isFeedback || isStated ? _feedbackCommandLength : _commandLength)
+      ..[0] = DeviceProtocol.version
+      ..[1] = command.opcode
+      ..[6] = command.argument
+      ..[7] = command.source;
     final data = ByteData.sublistView(bytes)
       ..setUint32(2, requestId, Endian.little);
     if (isFeedback) data.setUint32(8, command.target, Endian.little);
+    if (isStated) {
+      bytes[8] = command.target & 0xff;
+      bytes[9] = (command.target >> 8) & 0xff;
+    }
     return bytes;
   }
 
@@ -38,8 +43,9 @@ abstract final class ProtocolCodec {
       throw const FormatException('Invalid command');
     }
     final isFeedback = bytes[1] == DeviceProtocol.opcodeFeedback;
+    final isStated = bytes[1] == DeviceProtocol.opcodeStatedPreference;
     if (bytes.length !=
-        (isFeedback ? _feedbackCommandLength : _commandLength)) {
+        (isFeedback || isStated ? _feedbackCommandLength : _commandLength)) {
       throw const FormatException('Invalid command');
     }
     final data = ByteData.sublistView(bytes);
@@ -48,7 +54,11 @@ abstract final class ProtocolCodec {
       opcode: bytes[1],
       argument: bytes[6],
       source: bytes[7],
-      target: isFeedback ? data.getUint32(8, Endian.little) : 0,
+      target: isFeedback
+          ? data.getUint32(8, Endian.little)
+          : isStated
+              ? bytes[8] | (bytes[9] << 8)
+              : 0,
     );
     _validate(requestId, command);
     return (requestId, command);
@@ -65,6 +75,11 @@ abstract final class ProtocolCodec {
         (bytes[5] & 0x03) != 0x03) {
       throw const FormatException('Board does not support XUNA local MVP v1');
     }
+  }
+
+  static bool supportsStatedPreference(Uint8List bytes) {
+    validateCapabilities(bytes);
+    return (bytes[2] & DeviceProtocol.capabilityStatedPreference) != 0;
   }
 
   static DeviceStatusModel decodeStatus(Uint8List bytes) {
@@ -164,8 +179,16 @@ abstract final class ProtocolCodec {
               command.target <= DeviceProtocol.maxRequestId,
           DeviceProtocol.opcodeForget =>
             argument == 0 && source == DeviceProtocol.sourceNone,
+          DeviceProtocol.opcodeStatedPreference => argument <= 1 &&
+              source == DeviceProtocol.sourceText &&
+              bytesTargetValid(command.target),
           _ => false,
         };
     if (!valid) throw const FormatException('Invalid command arguments');
   }
+
+  static bool bytesTargetValid(int target) =>
+      (target & 0x0f) <= 4 &&
+      ((target >> 4) & 0x0f) <= 2 &&
+      ((target >> 8) & 0xff) <= DeviceProtocol.animationCurious;
 }

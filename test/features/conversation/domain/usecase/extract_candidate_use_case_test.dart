@@ -195,6 +195,8 @@ void main() {
     expect(completed.context, PreferenceContext.greeting);
     expect(completed.action, AnimationState.curious);
     expect(completed.polarity, PreferencePolarity.like);
+    expect(_extract.resolveContext('khi ch\u01a1i'), PreferenceContext.play);
+    expect(_extract.resolveContext('khong ro'), isNull);
   });
 
   test('teaching candidates need confirmation and carry their provenance', () {

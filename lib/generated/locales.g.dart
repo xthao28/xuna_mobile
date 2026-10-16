@@ -197,6 +197,10 @@ class LocaleKeys {
   static const home_replyConfirmRejected = 'home_replyConfirmRejected';
   static const home_replyForgotten = 'home_replyForgotten';
   static const home_replyUnknown = 'home_replyUnknown';
+  static const home_replyNeedContext = 'home_replyNeedContext';
+  static const home_replyStatedUnsupported = 'home_replyStatedUnsupported';
+  static const home_replyConfirmTeaching = 'home_replyConfirmTeaching';
+  static const home_replyTeachingApplied = 'home_replyTeachingApplied';
 }
 
 class Locales {
@@ -390,6 +394,11 @@ class Locales {
     'home_infoLink': 'Kết nối',
     'home_infoLinkValue': 'Bluetooth LE',
     'home_infoProtocol': 'Giao thức',
+    'home_replyNeedContext': 'Hay noi lai mot cau day du kem ngu canh.',
+    'home_replyStatedUnsupported':
+        'XUNA chua ho tro ghi so thich tu tro chuyen.',
+    'home_replyConfirmTeaching': 'Xac nhan day la dieu ban vua noi voi XUNA.',
+    'home_replyTeachingApplied': 'Minh da ghi dieu ban vua xac nhan.',
     'home_infoProtocolValue': 'XUNA local v1',
     'home_infoNote': 'Thiết bị hiện chưa có loa, micro hay pin theo dõi được.',
     'home_replyIntro':

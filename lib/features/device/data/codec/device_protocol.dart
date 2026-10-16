@@ -7,6 +7,7 @@ abstract final class DeviceProtocol {
   static const opcodeSuggest = 2;
   static const opcodeFeedback = 3;
   static const opcodeForget = 4;
+  static const opcodeStatedPreference = 6;
 
   static const statusSnapshot = 0;
   static const statusResult = 1;
@@ -32,6 +33,8 @@ abstract final class DeviceProtocol {
   static const sourceNone = 0;
   static const sourceButton = 1;
   static const sourceText = 2;
+
+  static const capabilityStatedPreference = 1 << 5;
 
   static const maxRequestId = 0xffffffff;
   static const maxMemoryEpisodes = 8;

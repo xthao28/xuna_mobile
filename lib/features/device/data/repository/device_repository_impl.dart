@@ -29,6 +29,8 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
   final DeviceStatusMapper _statusMapper;
   final LifeSummaryMapper _lifeMapper;
   final MemoryEpisodeMapper _memoryMapper;
+  @override
+  bool get supportsStatedPreference => _dataSource.supportsStatedPreference;
 
   @override
   Stream<DeviceStatus> watchStatus() => _dataSource.statuses.transform(
@@ -82,6 +84,19 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
 
   @override
   Future<void> forget() => _send(const DeviceCommandModel.forget());
+  @override
+  Future<void> statePreference(
+      {required bool likes,
+      required int contextKey,
+      required AnimationState action}) {
+    if (!supportsStatedPreference) {
+      throw const DeviceException(DeviceExceptionKind.unsupportedDevice);
+    }
+    return _send(DeviceCommandModel.statedPreference(
+        likes: likes,
+        contextKey: contextKey,
+        action: DeviceCodes.animation(action)));
+  }
 
   @override
   Future<void> disconnect() => _guard(_dataSource.disconnect);

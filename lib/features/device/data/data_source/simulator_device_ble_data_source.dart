@@ -18,6 +18,8 @@ import 'package:xuna_mobile/features/device/domain/exception/device_exception.da
 /// session. Do not add learning rules here (AGENTS §6); conformance with the
 /// firmware is checked by golden vectors in session S20.
 class SimulatorDeviceBleDataSource implements DeviceBleDataSource {
+  @override
+  bool get supportsStatedPreference => true;
   SimulatorDeviceBleDataSource({
     this.happyDuration = const Duration(milliseconds: 2400),
   });
@@ -94,6 +96,8 @@ class SimulatorDeviceBleDataSource implements DeviceBleDataSource {
         );
       case DeviceProtocol.opcodeForget:
         _forget();
+      case DeviceProtocol.opcodeStatedPreference:
+        _events++;
     }
     return _status(DeviceProtocol.statusResult, requestId: requestId);
   }
