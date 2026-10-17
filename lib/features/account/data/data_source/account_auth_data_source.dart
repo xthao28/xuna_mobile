@@ -24,6 +24,10 @@ class AccountAuthDataSourceImpl implements AccountAuthDataSource {
       : _google = googleSignIn ?? GoogleSignIn(scopes: const ['email']);
 
   static const _timeout = Duration(seconds: 30);
+
+  /// The owner types credentials in the Google picker; network timeouts
+  /// must not cancel a human (board/emulator test 2026-10-17).
+  static const _pickerTimeout = Duration(minutes: 5);
   static const _tokenTimeout = Duration(seconds: 10);
 
   final GoogleSignIn _google;
@@ -49,7 +53,7 @@ class AccountAuthDataSourceImpl implements AccountAuthDataSource {
   @override
   Future<AccountModel> signInWithGoogle() async {
     final auth = _auth;
-    final picked = await _google.signIn().timeout(_timeout);
+    final picked = await _google.signIn().timeout(_pickerTimeout);
     if (picked == null) {
       throw const AccountException(AccountExceptionKind.cancelled);
     }
