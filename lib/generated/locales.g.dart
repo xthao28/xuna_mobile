@@ -9,6 +9,23 @@ class AppTranslation {
 }
 
 class LocaleKeys {
+  static const account_title = 'account_title';
+  static const account_note = 'account_note';
+  static const account_signedOut = 'account_signedOut';
+  static const account_signedInAs = 'account_signedInAs';
+  static const account_signIn = 'account_signIn';
+  static const account_signOut = 'account_signOut';
+  static const account_checkCloud = 'account_checkCloud';
+  static const account_cloudOk = 'account_cloudOk';
+  static const account_signedOutToast = 'account_signedOutToast';
+  static const account_errorNotConfigured = 'account_errorNotConfigured';
+  static const account_errorCancelled = 'account_errorCancelled';
+  static const account_errorNotSignedIn = 'account_errorNotSignedIn';
+  static const account_errorNetwork = 'account_errorNetwork';
+  static const account_errorSignInFailed = 'account_errorSignInFailed';
+  static const account_errorCloudNotConfigured = 'account_errorCloudNotConfigured';
+  static const account_errorCloudUnavailable = 'account_errorCloudUnavailable';
+  static const account_errorCloudRejected = 'account_errorCloudRejected';
   static const device_errorIdentityUnavailable =
       'device_errorIdentityUnavailable';
   static const device_errorExportFailed = 'device_errorExportFailed';
@@ -230,6 +247,23 @@ class LocaleKeys {
 
 class Locales {
   static const vi_VN = {
+    'account_title': 'TÀI KHOẢN',
+    'account_note': 'Không bắt buộc. Thú cưng vẫn sống trên thiết bị khi bạn không đăng nhập.',
+    'account_signedOut': 'Chưa đăng nhập',
+    'account_signedInAs': 'Đang đăng nhập: @name',
+    'account_signIn': 'Đăng nhập với Google',
+    'account_signOut': 'Đăng xuất',
+    'account_checkCloud': 'Kiểm tra kết nối XUNA Cloud',
+    'account_cloudOk': 'Đã kết nối XUNA Cloud.',
+    'account_signedOutToast': 'Đã đăng xuất. Thú cưng trên thiết bị không bị ảnh hưởng.',
+    'account_errorNotConfigured': 'Bản app này chưa cấu hình tài khoản Cloud.',
+    'account_errorCancelled': 'Đã huỷ đăng nhập.',
+    'account_errorNotSignedIn': 'Hãy đăng nhập trước.',
+    'account_errorNetwork': 'Không có mạng. Hãy thử lại.',
+    'account_errorSignInFailed': 'Đăng nhập Google không thành công. Hãy thử lại.',
+    'account_errorCloudNotConfigured': 'Bản app này chưa có địa chỉ máy chủ XUNA Cloud.',
+    'account_errorCloudUnavailable': 'Chưa kết nối được XUNA Cloud. XUNA vẫn sống bình thường trên thiết bị.',
+    'account_errorCloudRejected': 'XUNA Cloud không chấp nhận phiên đăng nhập. Hãy đăng nhập lại.',
     'device_errorIdentityUnavailable':
         'XUNA chưa báo được PetId (firmware cũ, chưa nở hoặc đang dùng simulator) nên chưa xuất được.',
     'device_errorExportFailed':

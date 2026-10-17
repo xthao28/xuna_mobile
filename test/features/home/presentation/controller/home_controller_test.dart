@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/read_learning_explanation_use_case.dart';
@@ -28,6 +29,7 @@ import 'package:xuna_mobile/features/device/domain/entity/device_export_result.d
 import 'package:xuna_mobile/features/device/domain/repository/device_export_repository.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/export_device_data_use_case.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/read_pet_identity_use_case.dart';
+import 'package:xuna_mobile/features/account/domain/domain.src.dart';
 import 'package:xuna_mobile/features/home/presentation/controller/home_controller.dart';
 import 'package:xuna_mobile/generated/locales.g.dart';
 
@@ -52,8 +54,41 @@ class _IdentityTransport extends SimulatorDeviceBleDataSource {
       );
 }
 
+class _FakeAccounts implements AccountRepository, CloudRepository {
+  final _changes = StreamController<Account?>.broadcast();
+  AccountException? signInError;
+  AccountException? cloudError;
+  int cloudCalls = 0;
+
+  @override
+  Stream<Account?> watchAccount() => _changes.stream;
+
+  @override
+  Future<Account> signInWithGoogle() async {
+    final error = signInError;
+    if (error != null) throw error;
+    const account = Account(uid: 'u1', email: 'owner@example.com');
+    _changes.add(account);
+    return account;
+  }
+
+  @override
+  Future<void> signOut() async => _changes.add(null);
+
+  @override
+  Future<String> idToken() async => 'token';
+
+  @override
+  Future<CloudProfile> fetchProfile() async {
+    cloudCalls++;
+    final error = cloudError;
+    if (error != null) throw error;
+    return const CloudProfile(userId: 'xuna-user');
+  }
+}
+
 HomeController _buildController(DeviceRepository repository,
-        {DeviceExportRepository? exports}) =>
+        {DeviceExportRepository? exports, _FakeAccounts? accounts}) =>
     HomeController(
       isSimulator: true,
       scanDevices: ScanDevicesUseCase(repository),
@@ -70,6 +105,11 @@ HomeController _buildController(DeviceRepository repository,
       readPetIdentity: ReadPetIdentityUseCase(repository),
       exportDeviceData:
           ExportDeviceDataUseCase(repository, exports ?? _RecordingExports()),
+      watchAccount: WatchAccountUseCase(accounts ?? _FakeAccounts()),
+      signInWithGoogle: SignInWithGoogleUseCase(accounts ?? _FakeAccounts()),
+      signOut: SignOutUseCase(accounts ?? _FakeAccounts()),
+      checkCloudConnection:
+          CheckCloudConnectionUseCase(accounts ?? _FakeAccounts()),
       parseTextIntent: const ParseTextIntentUseCase(),
       extractCandidate: const ExtractCandidateUseCase(),
       confirmCandidate: ConfirmCandidateUseCase(repository),
@@ -296,5 +336,40 @@ void main() {
     expect(view.identity.value, isNull);
     view.onClose();
     device.onClose();
+  });
+
+  test('cloud account is optional: sign in, check cloud, sign out', () async {
+    final accounts = _FakeAccounts();
+    final view = _buildController(repository, accounts: accounts)..onInit();
+    expect(view.account.value, isNull);
+    await view.signIn();
+    expect(view.account.value?.email, 'owner@example.com');
+    await view.checkCloud();
+    expect(accounts.cloudCalls, 1);
+    expect(navigator.snackBars.last, LocaleKeys.account_cloudOk.tr);
+    await view.signOut();
+    expect(view.account.value, isNull);
+    expect(navigator.snackBars.last, LocaleKeys.account_signedOutToast.tr);
+    view.onClose();
+  });
+
+  test('account errors are localized and never block the pet', () async {
+    final accounts = _FakeAccounts()
+      ..signInError = const AccountException(AccountExceptionKind.cancelled);
+    final view = _buildController(repository, accounts: accounts)..onInit();
+    await view.signIn();
+    expect(view.account.value, isNull);
+    expect(navigator.snackBars.last, LocaleKeys.account_errorCancelled.tr);
+    accounts
+      ..signInError = null
+      ..cloudError =
+          const AccountException(AccountExceptionKind.cloudUnavailable);
+    await view.signIn();
+    await view.checkCloud();
+    expect(
+        navigator.snackBars.last, LocaleKeys.account_errorCloudUnavailable.tr);
+    await view.connect(SimulatorDeviceBleDataSource.deviceId);
+    expect(view.connected.value, isTrue);
+    view.onClose();
   });
 }

@@ -11,3 +11,6 @@ coverage/
 .DS_Store
 
 /lib/assets.preview.dart
+# Firebase client config (owner project xuna-pet); not committed.
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist

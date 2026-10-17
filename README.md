@@ -97,3 +97,19 @@ The board currently runs the preceding S13/S18 image without bit 5; this
 upgrade has not been uploaded or tested on hardware. Install the compatible
 app before a later firmware rollout that enables result 8. Direct GPIO0
 learning and TimeSync remain separate work.
+
+
+### Optional XUNA Cloud account (Firebase Auth, 2026-10-17)
+
+Owner chose Firebase Auth (project `xuna-pet`, Google sign-in). The Device tab has a
+"Tài khoản" card: sign in with Google, check the cloud connection (`GET /v1/me` with the
+Firebase ID token), sign out. Signing in is optional and never affects the pet.
+
+- Put the owner's `google-services.json` at `android/app/google-services.json` (gitignored).
+  Google sign-in needs the debug SHA-1 registered in Firebase and a re-downloaded file
+  containing `oauth_client` entries.
+- Backend URL is compiled in: `fvm flutter run --dart-define=XUNA_API_BASE_URL=http://10.0.2.2:8000`
+  (emulator → Mac) or the Mac's LAN IP on a phone. Debug builds allow HTTP; release is HTTPS-only.
+- Backend side: `XUNA_FIREBASE_PROJECT_ID=xuna-pet`.
+- Pinned packages: `firebase_core 3.13.0`, `firebase_auth 5.5.2`, `google_sign_in 6.3.0`;
+  Gradle plugin `com.google.gms.google-services 4.4.2`. `minSdk` raised to 23 (Android 6.0), required by `firebase_auth`.

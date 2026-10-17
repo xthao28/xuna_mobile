@@ -1,3 +1,4 @@
+export 'home_account_card.dart';
 export 'home_board_illustration.dart';
 export 'home_chat_bubble.dart';
 export 'home_chat_composer.dart';

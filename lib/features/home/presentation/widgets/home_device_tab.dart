@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:xuna_mobile/assets.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
 import 'package:xuna_mobile/features/device/presentation/extension/device_labels.dart';
+import 'package:xuna_mobile/features/home/presentation/widgets/home_account_card.dart';
 import 'package:xuna_mobile/features/home/presentation/widgets/home_board_illustration.dart';
 import 'package:xuna_mobile/features/home/presentation/widgets/home_device_settings_card.dart';
 import 'package:xuna_mobile/features/home/presentation/widgets/home_device_status_card.dart';
@@ -30,6 +31,10 @@ class HomeDeviceTab extends StatelessWidget {
     required this.onAnimation,
     required this.onInfo,
     required this.onExport,
+    required this.accountName,
+    required this.onSignIn,
+    required this.onSignOut,
+    required this.onCheckCloud,
     required this.onComingSoon,
   });
 
@@ -50,6 +55,12 @@ class HomeDeviceTab extends StatelessWidget {
 
   /// Writes a local JSON export of device data; read-only.
   final VoidCallback onExport;
+
+  /// Signed-in account label, or null when signed out.
+  final String? accountName;
+  final VoidCallback onSignIn;
+  final VoidCallback onSignOut;
+  final VoidCallback onCheckCloud;
   final VoidCallback onComingSoon;
 
   @override
@@ -146,6 +157,14 @@ class HomeDeviceTab extends StatelessWidget {
           LocaleKeys.home_exportNote.tr,
           style: AppTextStyle.font13Re.copyWith(color: AppColors.xunaInkMuted),
           maxLines: 3,
+        ),
+        const SizedBox(height: AppDimens.padding22),
+        HomeAccountCard(
+          accountName: accountName,
+          isBusy: isBusy,
+          onSignIn: onSignIn,
+          onSignOut: onSignOut,
+          onCheckCloud: onCheckCloud,
         ),
         const SizedBox(height: AppDimens.padding22),
         Text(LocaleKeys.home_settingsTitle.tr, style: AppTextStyle.display19),

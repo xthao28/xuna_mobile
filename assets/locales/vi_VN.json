@@ -213,5 +213,24 @@
     "exportDoneMessage": "Đã lưu tại @path\nSHA-256: @hash…",
     "infoPetId": "PetId",
     "infoPetIdUnavailable": "Chưa đọc được"
+  },
+  "account": {
+    "title": "TÀI KHOẢN",
+    "note": "Không bắt buộc. Thú cưng vẫn sống trên thiết bị khi bạn không đăng nhập.",
+    "signedOut": "Chưa đăng nhập",
+    "signedInAs": "Đang đăng nhập: @name",
+    "signIn": "Đăng nhập với Google",
+    "signOut": "Đăng xuất",
+    "checkCloud": "Kiểm tra kết nối XUNA Cloud",
+    "cloudOk": "Đã kết nối XUNA Cloud.",
+    "signedOutToast": "Đã đăng xuất. Thú cưng trên thiết bị không bị ảnh hưởng.",
+    "errorNotConfigured": "Bản app này chưa cấu hình tài khoản Cloud.",
+    "errorCancelled": "Đã huỷ đăng nhập.",
+    "errorNotSignedIn": "Hãy đăng nhập trước.",
+    "errorNetwork": "Không có mạng. Hãy thử lại.",
+    "errorSignInFailed": "Đăng nhập Google không thành công. Hãy thử lại.",
+    "errorCloudNotConfigured": "Bản app này chưa có địa chỉ máy chủ XUNA Cloud.",
+    "errorCloudUnavailable": "Chưa kết nối được XUNA Cloud. XUNA vẫn sống bình thường trên thiết bị.",
+    "errorCloudRejected": "XUNA Cloud không chấp nhận phiên đăng nhập. Hãy đăng nhập lại."
   }
 }

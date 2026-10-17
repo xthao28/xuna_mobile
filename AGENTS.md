@@ -148,7 +148,7 @@ lib/
 
 - Local data goes through `AppHive` (or a feature data source wrapping it). Keys are constants with a schema version suffix (`'journal_entries_v1'`); stored values are versioned maps; migrate when the shape changes. Hive returns `Map<dynamic, dynamic>`: convert with `Map<String, dynamic>.from(...)` before `fromJson`.
 - Never store raw conversation text, and never store pet-life state as truth on the phone (§6).
-- `RestApiClient` and its subclasses exist but are not registered, and no backend is approved. Do not register or call network clients unless the session explicitly scopes a backend/cloud integration. No secrets or API keys in source, `--dart-define` defaults or committed `envied` files.
+- `RestApiClient` and its subclasses exist but are not registered. The only approved network use (owner 2026-10-17) is the `account` feature: Firebase Auth (Google) and the XUNA backend via `CloudRemoteDataSource` (base URL from `--dart-define=XUNA_API_BASE_URL`, HTTPS in release; cleartext only in the debug manifest). Any other network call needs a session that scopes it. No secrets or API keys in source, `--dart-define` defaults or committed `envied` files.
 
 ## 5. Presentation layer (GetX)
 
@@ -216,7 +216,7 @@ Base widgets are the app's shared UI components: buttons, cards, list rows, sect
 4. **Conversation input:** parse locally into candidate intents. Anything that teaches XUNA needs an explicit confirmation showing what will be recorded and its source. Unknown input never learns. Raw input text is neither stored nor logged. Future AI/provider output is untrusted until validated.
 5. **Destructive and privacy actions** (forget, reset, delete) require `nav.showConfirmDialog` and say they cannot be undone.
 6. **Simulator** is opt-in (`--dart-define=XUNA_SIMULATOR=true`) and always visibly labeled; simulator data is never presented as board data.
-7. **No backend, LLM, voice or cloud** calls, permissions or dependencies unless the current session explicitly includes them.
+7. **No backend, LLM, voice or cloud** calls, permissions or dependencies unless the current session explicitly includes them. Exception (owner 2026-10-17): the optional `account` feature (Firebase Auth + XUNA backend). Cloud sign-in must stay optional: the pet, BLE and local features work signed out, and sign-out never touches the device.
 
 ## 7. Async, resources and logging
 

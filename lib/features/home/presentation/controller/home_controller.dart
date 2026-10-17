@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:xuna_mobile/core/presentation/controllers/base_getx_controller.dart';
 import 'package:xuna_mobile/core/presentation/navigation/app_navigator.dart';
 import 'package:xuna_mobile/core/presentation/navigation/snack_bar_type.dart';
+import 'package:xuna_mobile/features/account/domain/domain.src.dart';
+import 'package:xuna_mobile/features/account/presentation/presentation.src.dart';
 import 'package:xuna_mobile/features/conversation/domain/domain.src.dart';
 import 'package:xuna_mobile/features/device/domain/domain.src.dart';
 import 'package:xuna_mobile/features/device/presentation/presentation.src.dart';
@@ -33,6 +35,10 @@ class HomeController extends BaseGetxController {
     required ForgetMemoriesUseCase forgetMemories,
     required ReadPetIdentityUseCase readPetIdentity,
     required ExportDeviceDataUseCase exportDeviceData,
+    required WatchAccountUseCase watchAccount,
+    required SignInWithGoogleUseCase signInWithGoogle,
+    required SignOutUseCase signOut,
+    required CheckCloudConnectionUseCase checkCloudConnection,
     required ParseTextIntentUseCase parseTextIntent,
     required ExtractCandidateUseCase extractCandidate,
     required ConfirmCandidateUseCase confirmCandidate,
@@ -49,6 +55,10 @@ class HomeController extends BaseGetxController {
         _forgetMemories = forgetMemories,
         _readPetIdentity = readPetIdentity,
         _exportDeviceData = exportDeviceData,
+        _watchAccount = watchAccount,
+        _signInWithGoogle = signInWithGoogle,
+        _signOut = signOut,
+        _checkCloudConnection = checkCloudConnection,
         _parseTextIntent = parseTextIntent,
         _extractCandidate = extractCandidate,
         _confirmCandidate = confirmCandidate;
@@ -69,6 +79,10 @@ class HomeController extends BaseGetxController {
   final ForgetMemoriesUseCase _forgetMemories;
   final ReadPetIdentityUseCase _readPetIdentity;
   final ExportDeviceDataUseCase _exportDeviceData;
+  final WatchAccountUseCase _watchAccount;
+  final SignInWithGoogleUseCase _signInWithGoogle;
+  final SignOutUseCase _signOut;
+  final CheckCloudConnectionUseCase _checkCloudConnection;
   final ParseTextIntentUseCase _parseTextIntent;
   final ExtractCandidateUseCase _extractCandidate;
   final ConfirmCandidateUseCase _confirmCandidate;
@@ -92,6 +106,9 @@ class HomeController extends BaseGetxController {
   /// Durable device identity; null for old firmware or before hatching.
   final identity = Rxn<PetIdentity>();
 
+  /// Optional cloud account (Firebase Auth); unrelated to pet authority.
+  final account = Rxn<Account>();
+
   /// On-screen conversation, newest last.
   final messages = <HomeChatMessage>[].obs;
 
@@ -102,6 +119,7 @@ class HomeController extends BaseGetxController {
   final candidateReview = RxnString();
 
   StreamSubscription<DeviceStatus>? _statusSubscription;
+  StreamSubscription<Account?>? _accountSubscription;
 
   bool get isBusy => isLoading.value || isLoadingOverlay.value;
 
@@ -109,6 +127,10 @@ class HomeController extends BaseGetxController {
   void onInit() {
     super.onInit();
     _say(LocaleKeys.home_replyIntro.tr);
+    _accountSubscription = _watchAccount.execute().listen(
+          (value) => account.value = value,
+          onError: (Object _) => account.value = null,
+        );
     _statusSubscription = _watchDeviceStatus.execute().listen(
       (status) {
         if (connected.value) animation.value = status.animation;
@@ -362,6 +384,22 @@ class HomeController extends BaseGetxController {
         );
       });
 
+  Future<void> signIn() => _run(() async {
+        account.value = await _signInWithGoogle.execute();
+      });
+
+  Future<void> signOut() => _run(() async {
+        await _signOut.execute();
+        account.value = null;
+        _toast(LocaleKeys.account_signedOutToast.tr);
+      });
+
+  /// Calls `GET /v1/me` with the Firebase token; sends no pet data.
+  Future<void> checkCloud() => _run(() async {
+        await _checkCloudConnection.execute();
+        _toast(LocaleKeys.account_cloudOk.tr);
+      });
+
   Future<void> disconnect() => _run(() async {
         await _disconnectDevice.execute();
         connected.value = false;
@@ -374,6 +412,7 @@ class HomeController extends BaseGetxController {
   @override
   void onClose() {
     _statusSubscription?.cancel();
+    _accountSubscription?.cancel();
     unawaited(_disconnectDevice.execute());
     super.onClose();
   }
@@ -406,6 +445,10 @@ class HomeController extends BaseGetxController {
   }
 
   AppException? _handleError(AppException error) {
+    if (error is AccountException) {
+      nav.showSnackBar(error.localizedMessage);
+      return null;
+    }
     if (error is! DeviceException) return error;
     message.value = error.localizedMessage;
     nav.showSnackBar(error.localizedMessage);

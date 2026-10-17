@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:xuna_mobile/core/presentation/bindings/base_bindings.dart';
+import 'package:xuna_mobile/features/account/data/data.src.dart';
+import 'package:xuna_mobile/features/account/domain/domain.src.dart';
 import 'package:xuna_mobile/features/conversation/domain/domain.src.dart';
 import 'package:xuna_mobile/features/device/data/data.src.dart';
 import 'package:xuna_mobile/features/device/domain/domain.src.dart';
@@ -18,6 +20,9 @@ class HomeBinding extends BaseBindings {
   /// Uses the development fake transport instead of BLE.
   final bool simulator;
 
+  /// XUNA Cloud base URL, e.g. `--dart-define=XUNA_API_BASE_URL=http://10.0.2.2:8000`.
+  static const apiBaseUrl = String.fromEnvironment('XUNA_API_BASE_URL');
+
   @override
   void bindingsRepository() {
     Get.lazyPut<DeviceBleDataSource>(
@@ -26,6 +31,12 @@ class HomeBinding extends BaseBindings {
           : DeviceBleDataSourceImpl(),
     );
     Get.lazyPut<DeviceRepository>(() => DeviceRepositoryImpl(sl()));
+    Get.lazyPut<AccountAuthDataSource>(() => AccountAuthDataSourceImpl());
+    Get.lazyPut<AccountRepository>(() => AccountRepositoryImpl(sl()));
+    Get.lazyPut<CloudRemoteDataSource>(
+      () => CloudRemoteDataSourceImpl(baseUrl: apiBaseUrl),
+    );
+    Get.lazyPut<CloudRepository>(() => CloudRepositoryImpl(sl(), sl()));
     Get.lazyPut<DeviceExportLocalDataSource>(
       () => DeviceExportLocalDataSourceImpl(),
     );
@@ -61,6 +72,10 @@ class HomeBinding extends BaseBindings {
     Get.lazyPut(() => ForgetMemoriesUseCase(sl()));
     Get.lazyPut(() => ReadPetIdentityUseCase(sl()));
     Get.lazyPut(() => ExportDeviceDataUseCase(sl(), sl()));
+    Get.lazyPut(() => WatchAccountUseCase(sl()));
+    Get.lazyPut(() => SignInWithGoogleUseCase(sl()));
+    Get.lazyPut(() => SignOutUseCase(sl()));
+    Get.lazyPut(() => CheckCloudConnectionUseCase(sl()));
     Get.lazyPut(() => const ParseTextIntentUseCase());
     Get.lazyPut(() => const ExtractCandidateUseCase());
     Get.lazyPut(() => ConfirmCandidateUseCase(sl()));
@@ -84,6 +99,10 @@ class HomeBinding extends BaseBindings {
         forgetMemories: sl(),
         readPetIdentity: sl(),
         exportDeviceData: sl(),
+        watchAccount: sl(),
+        signInWithGoogle: sl(),
+        signOut: sl(),
+        checkCloudConnection: sl(),
         parseTextIntent: sl(),
         extractCandidate: sl(),
         confirmCandidate: sl(),

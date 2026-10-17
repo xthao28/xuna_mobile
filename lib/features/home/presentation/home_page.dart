@@ -130,6 +130,12 @@ class HomePage extends BaseGetPage<HomeController> {
           onAnimation: controller.setAnimation,
           onInfo: _openDeviceInfo,
           onExport: controller.exportData,
+          accountName: controller.account.value?.email ??
+              controller.account.value?.displayName ??
+              controller.account.value?.uid,
+          onSignIn: controller.signIn,
+          onSignOut: controller.signOut,
+          onCheckCloud: controller.checkCloud,
           onComingSoon: controller.showComingSoon,
         ),
       );

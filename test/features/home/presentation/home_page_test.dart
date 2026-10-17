@@ -53,11 +53,13 @@ Future<void> _tapIn<T extends Widget>(
     WidgetTester tester, Finder finder) async {
   final target = _inTab<T>(finder);
   if (target.evaluate().isEmpty) {
-    await tester.scrollUntilVisible(
-      target,
-      200,
-      scrollable: _inTab<T>(find.byType(Scrollable)).first,
-    );
+    // Lazy lists may have disposed it above or below: restart from the top.
+    final scrollable = _inTab<T>(find.byType(Scrollable)).first;
+    tester.state<ScrollableState>(scrollable).position.jumpTo(0);
+    await tester.pump();
+    if (target.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(target, 200, scrollable: scrollable);
+    }
   }
   await _tap(tester, target);
 }
@@ -73,6 +75,12 @@ Future<void> _connectSimulator(WidgetTester tester) async {
   await _openTab(tester, 'Thiết bị');
   await _tapIn<HomeDeviceTab>(tester, find.text('TÌM XUNA MÔ PHỎNG'));
   await _tapIn<HomeDeviceTab>(tester, find.text('XUNA simulator'));
+  // The tab is a lazy ListView; bring the status card back into view.
+  await tester.scrollUntilVisible(
+    find.byKey(HomeDeviceStatusCard.statusMessageKey),
+    -200,
+    scrollable: _inTab<HomeDeviceTab>(find.byType(Scrollable)).first,
+  );
 }
 
 String? _deviceStatus(WidgetTester tester) =>
