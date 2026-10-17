@@ -8,6 +8,7 @@ import 'package:xuna_mobile/features/device/data/codec/device_protocol.dart';
 import 'package:xuna_mobile/features/device/data/data_source/device_ble_data_source.dart';
 import 'package:xuna_mobile/features/device/data/data_source/simulator_device_ble_data_source.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
+import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
 import 'package:xuna_mobile/features/device/data/repository/device_repository_impl.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
@@ -17,9 +18,15 @@ import 'package:xuna_mobile/features/device/domain/usecase/request_animation_use
 import '../../../../helpers/device_matchers.dart';
 
 class _FakeDataSource extends Fake implements DeviceBleDataSource {
-  _FakeDataSource({this.scanError});
+  _FakeDataSource({this.scanError, this.timeSync = false});
 
   final Object? scanError;
+  final bool timeSync;
+  final sent = <DeviceCommandModel>[];
+  @override
+  bool get supportsTimeSync => timeSync;
+  @override
+  bool get supportsStatedPreference => false;
   @override
   Future<LearningExplanationModel?> readExplanation() async {
     final error = scanError;
@@ -41,6 +48,25 @@ class _FakeDataSource extends Fake implements DeviceBleDataSource {
   }
 
   @override
+  Future<DeviceStatusModel> connect(String deviceId) async =>
+      _stateChange(DeviceProtocol.animationIdle);
+
+  @override
+  Future<DeviceStatusModel> send(DeviceCommandModel command) async {
+    sent.add(command);
+    return DeviceStatusModel(
+      kind: DeviceProtocol.statusResult,
+      requestId: sent.length,
+      resultCode: DeviceProtocol.resultOk,
+      animationCode: DeviceProtocol.animationIdle,
+      sequence: 0,
+    );
+  }
+
+  @override
+  Future<void> disconnect() async {}
+
+  @override
   Future<void> close() => _statuses.close();
 
   void emit(DeviceStatusModel status) => _statuses.add(status);
@@ -57,6 +83,30 @@ DeviceStatusModel _stateChange(int animationCode) => DeviceStatusModel(
     );
 
 void main() {
+  test('connect syncs phone time immediately and every six hours', () async {
+    final dataSource = _FakeDataSource(timeSync: true);
+    final local = DateTime.parse('2026-10-17T08:30:00+07:00');
+    final repository = DeviceRepositoryImpl(
+      dataSource,
+      now: () => local,
+      timezoneOffset: () => const Duration(hours: 7),
+      syncInterval: const Duration(milliseconds: 10),
+    );
+    addTearDown(repository.onClose);
+    await repository.connect('xuna');
+    expect(dataSource.sent, hasLength(1));
+    expect(dataSource.sent.single.opcode, DeviceProtocol.opcodeTimeSync);
+    expect(dataSource.sent.single.utcSeconds,
+        local.toUtc().millisecondsSinceEpoch ~/ 1000);
+    expect(dataSource.sent.single.timezoneOffsetMinutes, 420);
+    await Future<void>.delayed(const Duration(milliseconds: 25));
+    expect(dataSource.sent.length, greaterThanOrEqualTo(2));
+    await repository.disconnect();
+    final count = dataSource.sent.length;
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(dataSource.sent, hasLength(count));
+  });
+
   test('explanation repository maps fixture and translates malformed transport',
       () async {
     final repository = DeviceRepositoryImpl(_FakeDataSource());

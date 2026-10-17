@@ -11,6 +11,7 @@ import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart
 /// leaves other errors to the repository.
 abstract interface class DeviceBleDataSource {
   bool get supportsStatedPreference;
+  bool get supportsTimeSync;
 
   /// Returns null for firmware without the additive explanation capability.
   Future<LearningExplanationModel?> readExplanation();

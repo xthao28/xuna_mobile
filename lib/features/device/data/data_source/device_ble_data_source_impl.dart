@@ -50,8 +50,11 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   int _epoch = 0;
   bool _ready = false;
   bool _supportsStatedPreference = false;
+  bool _supportsTimeSync = false;
   @override
   bool get supportsStatedPreference => _supportsStatedPreference;
+  @override
+  bool get supportsTimeSync => _supportsTimeSync;
 
   @override
   Stream<DeviceStatusModel> get statuses => _statuses.stream;
@@ -134,6 +137,9 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
       try {
         ProtocolCodec.validateCapabilities(Uint8List.fromList(capabilities));
         _supportsStatedPreference = ProtocolCodec.supportsStatedPreference(
+          Uint8List.fromList(capabilities),
+        );
+        _supportsTimeSync = ProtocolCodec.supportsTimeSync(
           Uint8List.fromList(capabilities),
         );
       } on FormatException catch (e) {
@@ -234,6 +240,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
     ++_epoch;
     _ready = false;
     _supportsStatedPreference = false;
+    _supportsTimeSync = false;
     _results.cancel(const DeviceException(DeviceExceptionKind.disconnected));
     await _values?.cancel();
     await _connection?.cancel();

@@ -28,6 +28,10 @@ class SimulatorDeviceBleDataSource implements DeviceBleDataSource {
 
   @override
   bool get supportsStatedPreference => true;
+  @override
+  // The simulator has no wall-clock/day-part model, so it must not claim the
+  // production capability or keep a six-hour transport timer alive in UI tests.
+  bool get supportsTimeSync => false;
   SimulatorDeviceBleDataSource({
     this.happyDuration = const Duration(milliseconds: 2400),
   });
@@ -106,6 +110,8 @@ class SimulatorDeviceBleDataSource implements DeviceBleDataSource {
         _forget();
       case DeviceProtocol.opcodeStatedPreference:
         _events++;
+      case DeviceProtocol.opcodeTimeSync:
+        break;
     }
     return _status(DeviceProtocol.statusResult, requestId: requestId);
   }

@@ -9,6 +9,7 @@ import 'package:xuna_mobile/features/device/data/mapper/device_status_mapper.dar
 import 'package:xuna_mobile/features/device/data/mapper/life_summary_mapper.dart';
 import 'package:xuna_mobile/features/device/data/mapper/memory_episode_mapper.dart';
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
+import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
 import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
@@ -23,14 +24,25 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
     DeviceStatusMapper? statusMapper,
     LifeSummaryMapper? lifeMapper,
     MemoryEpisodeMapper? memoryMapper,
+    DateTime Function()? now,
+    Duration Function()? timezoneOffset,
+    Duration syncInterval = const Duration(hours: 6),
   })  : _statusMapper = statusMapper ?? DeviceStatusMapper(),
         _lifeMapper = lifeMapper ?? LifeSummaryMapper(),
-        _memoryMapper = memoryMapper ?? MemoryEpisodeMapper();
+        _memoryMapper = memoryMapper ?? MemoryEpisodeMapper(),
+        _now = now ?? DateTime.now,
+        _timezoneOffset =
+            timezoneOffset ?? (() => DateTime.now().timeZoneOffset),
+        _syncInterval = syncInterval;
 
   final DeviceBleDataSource _dataSource;
   final DeviceStatusMapper _statusMapper;
   final LifeSummaryMapper _lifeMapper;
   final MemoryEpisodeMapper _memoryMapper;
+  final DateTime Function() _now;
+  final Duration Function() _timezoneOffset;
+  final Duration _syncInterval;
+  Timer? _syncTimer;
   @override
   bool get supportsStatedPreference => _dataSource.supportsStatedPreference;
 
@@ -61,8 +73,21 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
   Future<List<String>> scan() => _guard(_dataSource.scan);
 
   @override
-  Future<DeviceStatus> connect(String deviceId) => _guard(() async =>
-      _statusMapper.mapToEntity(await _dataSource.connect(deviceId)));
+  Future<DeviceStatus> connect(String deviceId) => _guard(() async {
+        final connected = await _dataSource.connect(deviceId);
+        if (!_dataSource.supportsTimeSync) {
+          return _statusMapper.mapToEntity(connected);
+        }
+        final synced = await _syncTime();
+        _syncTimer?.cancel();
+        _syncTimer = Timer.periodic(_syncInterval, (_) {
+          unawaited(_syncTime().then<void>(
+            (_) {},
+            onError: (Object _, StackTrace __) {},
+          ));
+        });
+        return _statusMapper.mapToEntity(synced);
+      });
 
   @override
   Future<DeviceStatus> requestAnimation(AnimationState animation) =>
@@ -109,16 +134,29 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
   }
 
   @override
-  Future<void> disconnect() => _guard(_dataSource.disconnect);
+  Future<void> disconnect() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+    return _guard(_dataSource.disconnect);
+  }
 
   @override
   void onClose() {
+    _syncTimer?.cancel();
     unawaited(_dataSource.close());
     super.onClose();
   }
 
   Future<DeviceStatus> _send(DeviceCommandModel command) => _guard(
       () async => _statusMapper.mapToEntity(await _dataSource.send(command)));
+
+  Future<DeviceStatusModel> _syncTime() {
+    final now = _now();
+    return _dataSource.send(DeviceCommandModel.timeSync(
+      utcSeconds: now.toUtc().millisecondsSinceEpoch ~/ 1000,
+      timezoneOffsetMinutes: _timezoneOffset().inMinutes,
+    ));
+  }
 
   Future<T> _guard<T>(Future<T> Function() action) async {
     try {
