@@ -10,6 +10,7 @@ import 'package:xuna_mobile/features/device/data/model/device_command_model.dart
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
+import 'package:xuna_mobile/features/device/data/model/pet_identity_model.dart';
 import 'package:xuna_mobile/features/device/domain/exception/device_exception.dart';
 
 /// FlutterBluePlus adapter for the XUNA MVP service: foreground, unbonded,
@@ -21,6 +22,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   static const _status = 4;
   static const _life = 5;
   static const _explanation = 11;
+  static const _identity = 12;
   static const _memoryPages = [6, 7];
 
   /// FlutterBluePlus GATT operation timeout, in seconds.
@@ -41,6 +43,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   BluetoothCharacteristic? _statusCharacteristic;
   BluetoothCharacteristic? _lifeCharacteristic;
   BluetoothCharacteristic? _explanationCharacteristic;
+  BluetoothCharacteristic? _identityCharacteristic;
   List<BluetoothCharacteristic> _memoryCharacteristics = [];
   StreamSubscription<List<int>>? _values;
   StreamSubscription<BluetoothConnectionState>? _connection;
@@ -51,10 +54,13 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   bool _ready = false;
   bool _supportsStatedPreference = false;
   bool _supportsTimeSync = false;
+  bool _supportsIdentity = false;
   @override
   bool get supportsStatedPreference => _supportsStatedPreference;
   @override
   bool get supportsTimeSync => _supportsTimeSync;
+  @override
+  bool get supportsIdentity => _supportsIdentity;
 
   @override
   Stream<DeviceStatusModel> get statuses => _statuses.stream;
@@ -142,6 +148,9 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
         _supportsTimeSync = ProtocolCodec.supportsTimeSync(
           Uint8List.fromList(capabilities),
         );
+        _supportsIdentity = ProtocolCodec.supportsIdentity(
+          Uint8List.fromList(capabilities),
+        );
       } on FormatException catch (e) {
         throw DeviceException(
           DeviceExceptionKind.unsupportedDevice,
@@ -150,6 +159,8 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
       }
       _explanationCharacteristic =
           _supportsStatedPreference ? characteristic(_explanation) : null;
+      _identityCharacteristic =
+          _supportsIdentity ? characteristic(_identity) : null;
       _values = _statusCharacteristic!.onValueReceived.listen((bytes) {
         if (epoch != _epoch) return;
         try {
@@ -210,6 +221,15 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   }
 
   @override
+  Future<PetIdentityModel?> readIdentity() async {
+    if (!_ready) throw const DeviceException(DeviceExceptionKind.notConnected);
+    final characteristic = _identityCharacteristic;
+    if (characteristic == null) return null;
+    final bytes = await characteristic.read(timeout: _gattTimeout);
+    return ProtocolCodec.decodeIdentity(Uint8List.fromList(bytes));
+  }
+
+  @override
   Future<LifeSummaryModel> readLife() async {
     final characteristic = _lifeCharacteristic;
     if (!_ready || characteristic == null) {
@@ -241,6 +261,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
     _ready = false;
     _supportsStatedPreference = false;
     _supportsTimeSync = false;
+    _supportsIdentity = false;
     _results.cancel(const DeviceException(DeviceExceptionKind.disconnected));
     await _values?.cancel();
     await _connection?.cancel();
@@ -252,6 +273,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
     _statusCharacteristic = null;
     _lifeCharacteristic = null;
     _explanationCharacteristic = null;
+    _identityCharacteristic = null;
     _memoryCharacteristics = [];
     await device?.disconnect();
   }

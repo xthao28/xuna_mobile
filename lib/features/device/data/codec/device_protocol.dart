@@ -41,6 +41,7 @@ abstract final class DeviceProtocol {
   static const capabilityStatedPreference = 1 << 5;
   static const capabilityTimeSync = 1 << 4;
   static const capabilityHatch = 1 << 6;
+  static const capabilityIdentity = 1 << 7;
 
   static const maxRequestId = 0xffffffff;
   static const maxMemoryEpisodes = 8;

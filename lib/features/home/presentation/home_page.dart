@@ -129,6 +129,7 @@ class HomePage extends BaseGetPage<HomeController> {
           onDisconnect: controller.disconnect,
           onAnimation: controller.setAnimation,
           onInfo: _openDeviceInfo,
+          onExport: controller.exportData,
           onComingSoon: controller.showComingSoon,
         ),
       );
@@ -161,7 +162,10 @@ class HomePage extends BaseGetPage<HomeController> {
       );
 
   void _openDeviceInfo() => nav.bottomSheet(
-        HomeDeviceInfoSheet(onClose: nav.back),
+        HomeDeviceInfoSheet(
+          onClose: nav.back,
+          petId: controller.identity.value?.petId,
+        ),
         isScrollControlled: true,
       );
 }

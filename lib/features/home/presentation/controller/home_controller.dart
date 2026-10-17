@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:xuna_mobile/core/presentation/controllers/base_getx_controller.dart';
+import 'package:xuna_mobile/core/presentation/navigation/app_navigator.dart';
 import 'package:xuna_mobile/core/presentation/navigation/snack_bar_type.dart';
 import 'package:xuna_mobile/features/conversation/domain/domain.src.dart';
 import 'package:xuna_mobile/features/device/domain/domain.src.dart';
@@ -30,6 +31,8 @@ class HomeController extends BaseGetxController {
     required ReadMemoriesUseCase readMemories,
     required ReadLearningExplanationUseCase readExplanation,
     required ForgetMemoriesUseCase forgetMemories,
+    required ReadPetIdentityUseCase readPetIdentity,
+    required ExportDeviceDataUseCase exportDeviceData,
     required ParseTextIntentUseCase parseTextIntent,
     required ExtractCandidateUseCase extractCandidate,
     required ConfirmCandidateUseCase confirmCandidate,
@@ -44,6 +47,8 @@ class HomeController extends BaseGetxController {
         _readMemories = readMemories,
         _readExplanation = readExplanation,
         _forgetMemories = forgetMemories,
+        _readPetIdentity = readPetIdentity,
+        _exportDeviceData = exportDeviceData,
         _parseTextIntent = parseTextIntent,
         _extractCandidate = extractCandidate,
         _confirmCandidate = confirmCandidate;
@@ -62,6 +67,8 @@ class HomeController extends BaseGetxController {
   final ReadMemoriesUseCase _readMemories;
   final ReadLearningExplanationUseCase _readExplanation;
   final ForgetMemoriesUseCase _forgetMemories;
+  final ReadPetIdentityUseCase _readPetIdentity;
+  final ExportDeviceDataUseCase _exportDeviceData;
   final ParseTextIntentUseCase _parseTextIntent;
   final ExtractCandidateUseCase _extractCandidate;
   final ConfirmCandidateUseCase _confirmCandidate;
@@ -81,6 +88,9 @@ class HomeController extends BaseGetxController {
 
   /// Device the app is connected to, for the device screen.
   final connectedDevice = RxnString();
+
+  /// Durable device identity; null for old firmware or before hatching.
+  final identity = Rxn<PetIdentity>();
 
   /// On-screen conversation, newest last.
   final messages = <HomeChatMessage>[].obs;
@@ -106,6 +116,7 @@ class HomeController extends BaseGetxController {
       onError: (Object error) {
         connected.value = false;
         connectedDevice.value = null;
+        identity.value = null;
         candidate.value = null;
         message.value = error is DeviceException
             ? error.localizedMessage
@@ -129,6 +140,7 @@ class HomeController extends BaseGetxController {
         connectedDevice.value = deviceId;
         candidate.value = null;
         await _refreshLife();
+        identity.value = await _readPetIdentity.execute();
         message.value = isSimulator
             ? LocaleKeys.home_statusConnectedSimulator.tr
             : LocaleKeys.home_statusConnected.tr;
@@ -333,10 +345,28 @@ class HomeController extends BaseGetxController {
   /// Feedback for a feature that is shown in the design but not built yet.
   void showComingSoon() => _toast(LocaleKeys.home_comingSoonToast.tr);
 
+  /// Reads device data over BLE and writes a local `xuna.export.v1` file.
+  /// Read-only: sends no command and teaches XUNA nothing.
+  Future<void> exportData() => _run(() async {
+        if (!connected.value) return;
+        final result = await _exportDeviceData.execute();
+        nav.showInfoDialog(
+          title: LocaleKeys.home_exportDoneTitle.tr,
+          subtitle: LocaleKeys.home_exportDoneMessage.trParams({
+            'path': result.location,
+            'hash': result.sha256.substring(0, 12),
+          }),
+          iconType: DialogIconType.success,
+          showCancelButton: false,
+          barrierDismissible: true,
+        );
+      });
+
   Future<void> disconnect() => _run(() async {
         await _disconnectDevice.execute();
         connected.value = false;
         connectedDevice.value = null;
+        identity.value = null;
         candidate.value = null;
         message.value = LocaleKeys.home_statusDisconnected.tr;
       });

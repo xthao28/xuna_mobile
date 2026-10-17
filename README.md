@@ -71,6 +71,17 @@ contexts, not claims about physical location or progression. Transparent pet GIF
 are exported separately; no detailed generated background images are bundled.
 
 
+### Identity and local export (Cloud gate b/c, source only, 2026-10-17)
+
+Firmware advertising capability bit 7 exposes Identity V1 at `7a6e000c`
+(PetId, origin, snapshot generation). The Device tab button "Xuất dữ liệu XUNA
+(JSON)" reads identity, life, memories and explanation from the device and
+writes `xuna.export.v1` to the app documents `exports/` folder with a SHA-256 of
+the payload. It only reads and never sends a command or uploads anything.
+Without a PetId (old firmware, Egg, simulator) export is refused. Android debug
+retrieval: `adb exec-out run-as com.example.xuna_mobile cat app_flutter/exports/<file>`.
+Format and hash rule: parent `docs/roadmap/cloud-gate-sprint-2026-10-17.md`.
+
 ### S26/S27-lite learning explanation (source/build only, 2026-10-16)
 
 With firmware advertising capability bit 5 and read characteristic `7a6e000b`,

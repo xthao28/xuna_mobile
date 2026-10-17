@@ -36,7 +36,9 @@
     "errorNoPendingSuggestion": "Hãy để XUNA chọn trước khi gửi feedback.",
     "errorInvalidResponse": "Dữ liệu từ XUNA không hợp lệ.",
     "errorCommunicationFailed": "Không giao tiếp được với XUNA. Hãy thử lại.",
-    "errorFeedbackExpired": "Đã quá 120 giây để đánh giá phản ứng này. Hãy yêu cầu XUNA chọn lại."
+    "errorFeedbackExpired": "Đã quá 120 giây để đánh giá phản ứng này. Hãy yêu cầu XUNA chọn lại.",
+    "errorIdentityUnavailable": "XUNA chưa báo được PetId (firmware cũ, chưa nở hoặc đang dùng simulator) nên chưa xuất được.",
+    "errorExportFailed": "Không lưu được file xuất trên điện thoại. Hãy thử lại."
   },
   "home": {
     "navHome": "Nhà",
@@ -204,6 +206,12 @@
     "whyMorning": "buổi sáng",
     "whyAfternoon": "buổi chiều",
     "whyEvening": "buổi tối",
-    "whyNight": "ban đêm"
+    "whyNight": "ban đêm",
+    "exportButton": "Xuất dữ liệu XUNA (JSON)",
+    "exportNote": "Chỉ đọc dữ liệu từ thiết bị rồi lưu một file JSON trên điện thoại. Không gửi lên mạng, không dạy XUNA điều gì.",
+    "exportDoneTitle": "Đã xuất dữ liệu",
+    "exportDoneMessage": "Đã lưu tại @path\nSHA-256: @hash…",
+    "infoPetId": "PetId",
+    "infoPetIdUnavailable": "Chưa đọc được"
   }
 }

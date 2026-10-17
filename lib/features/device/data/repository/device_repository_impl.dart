@@ -8,6 +8,7 @@ import 'package:xuna_mobile/features/device/data/mapper/device_codes.dart';
 import 'package:xuna_mobile/features/device/data/mapper/device_status_mapper.dart';
 import 'package:xuna_mobile/features/device/data/mapper/life_summary_mapper.dart';
 import 'package:xuna_mobile/features/device/data/mapper/memory_episode_mapper.dart';
+import 'package:xuna_mobile/features/device/data/mapper/pet_identity_mapper.dart';
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
@@ -15,6 +16,7 @@ import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
 import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
 import 'package:xuna_mobile/features/device/domain/entity/life_summary.dart';
 import 'package:xuna_mobile/features/device/domain/entity/memory_episode.dart';
+import 'package:xuna_mobile/features/device/domain/entity/pet_identity.dart';
 import 'package:xuna_mobile/features/device/domain/exception/device_exception.dart';
 import 'package:xuna_mobile/features/device/domain/repository/device_repository.dart';
 
@@ -45,6 +47,18 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
   Timer? _syncTimer;
   @override
   bool get supportsStatedPreference => _dataSource.supportsStatedPreference;
+  @override
+  bool get supportsTimeSync => _dataSource.supportsTimeSync;
+  @override
+  bool get supportsIdentity => _dataSource.supportsIdentity;
+
+  @override
+  Future<PetIdentity?> readIdentity() => _guard(() async {
+        final model = await _dataSource.readIdentity();
+        return model == null || !model.ready
+            ? null
+            : PetIdentityMapper().mapToEntity(model);
+      });
 
   @override
   Future<LearningExplanation?> readExplanation() => _guard(() async {

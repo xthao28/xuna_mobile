@@ -44,6 +44,8 @@ dependencies:
   package_info_plus: ^8.3.0
   envied: ^1.1.1
   path_provider: ^2.1.5
+  # Export integrity hash (xuna.export.v1); already resolved transitively.
+  crypto: 3.0.7
   hive: ^2.2.3
   equatable: ^2.0.7
   bot_toast: ^4.1.3

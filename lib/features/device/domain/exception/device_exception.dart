@@ -21,6 +21,13 @@ enum DeviceExceptionKind {
   noPendingSuggestion,
   invalidResponse,
   communicationFailed,
+
+  /// The device cannot report a durable PetId (old firmware, Egg, safe mode
+  /// or simulator), so an export would not identify the pet.
+  identityUnavailable,
+
+  /// The export file could not be written locally.
+  exportFailed,
 }
 
 /// Failures of the device feature. Carries no UI text: presentation maps

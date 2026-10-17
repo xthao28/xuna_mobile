@@ -6,6 +6,7 @@ import 'package:xuna_mobile/features/device/data/model/device_status_model.dart'
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
 import 'package:xuna_mobile/features/device/data/model/lifecycle_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
+import 'package:xuna_mobile/features/device/data/model/pet_identity_model.dart';
 
 /// Binary codec for XUNA BLE protocol v1. Every method throws
 /// [FormatException] on a malformed frame or invalid argument.
@@ -18,6 +19,7 @@ abstract final class ProtocolCodec {
   static const _lifeLength = 20;
   static const _memoryPageLength = 20;
   static const _lifecycleLength = 8;
+  static const _identityLength = 24;
   static const _episodesPerPage = 4;
 
   static Uint8List encode(int requestId, DeviceCommandModel command) {
@@ -112,6 +114,39 @@ abstract final class ProtocolCodec {
   static bool supportsHatch(Uint8List bytes) {
     validateCapabilities(bytes);
     return (bytes[2] & DeviceProtocol.capabilityHatch) != 0;
+  }
+
+  static bool supportsIdentity(Uint8List bytes) {
+    validateCapabilities(bytes);
+    return (bytes[2] & DeviceProtocol.capabilityIdentity) != 0;
+  }
+
+  /// Identity V1: version, size, petId[16], origin, reserved, generation
+  /// u32 LE. A device without a ready identity sends only version and size.
+  static PetIdentityModel decodeIdentity(Uint8List bytes) {
+    if (bytes.length != _identityLength ||
+        bytes[0] != DeviceProtocol.version ||
+        bytes[1] != _identityLength ||
+        bytes[18] > 3 ||
+        bytes[19] != 0) {
+      throw const FormatException('Invalid identity');
+    }
+    final model = PetIdentityModel(
+      petId: Uint8List.fromList(bytes.sublist(2, 18)),
+      originCode: bytes[18],
+      snapshotGeneration:
+          ByteData.sublistView(bytes).getUint32(20, Endian.little),
+    );
+    if (!model.ready) {
+      if (bytes.skip(2).any((b) => b != 0)) {
+        throw const FormatException('Identity data without origin');
+      }
+      return model;
+    }
+    if ((bytes[8] & 0xf0) != 0x40 || (bytes[10] & 0xc0) != 0x80) {
+      throw const FormatException('PetId is not a UUIDv4');
+    }
+    return model;
   }
 
   static LifecycleModel decodeLifecycle(Uint8List bytes) {

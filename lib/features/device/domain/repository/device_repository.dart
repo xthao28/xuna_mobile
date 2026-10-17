@@ -4,6 +4,7 @@ import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
 import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
 import 'package:xuna_mobile/features/device/domain/entity/life_summary.dart';
 import 'package:xuna_mobile/features/device/domain/entity/memory_episode.dart';
+import 'package:xuna_mobile/features/device/domain/entity/pet_identity.dart';
 
 /// Connection to one XUNA device.
 ///
@@ -12,6 +13,12 @@ import 'package:xuna_mobile/features/device/domain/entity/memory_episode.dart';
 /// failure.
 abstract interface class DeviceRepository {
   bool get supportsStatedPreference;
+  bool get supportsTimeSync;
+  bool get supportsIdentity;
+
+  /// Returns null for firmware without the Identity V1 capability or when
+  /// the device has no ready identity yet.
+  Future<PetIdentity?> readIdentity();
 
   /// Returns null for firmware without the additive explanation capability.
   Future<LearningExplanation?> readExplanation();

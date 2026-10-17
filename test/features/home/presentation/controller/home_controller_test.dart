@@ -22,10 +22,39 @@ import 'package:xuna_mobile/features/device/domain/usecase/scan_devices_use_case
 import 'package:xuna_mobile/features/device/domain/usecase/send_feedback_use_case.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/suggest_action_use_case.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/watch_device_status_use_case.dart';
+import 'package:xuna_mobile/features/device/data/model/pet_identity_model.dart';
+import 'package:xuna_mobile/features/device/domain/entity/device_export.dart';
+import 'package:xuna_mobile/features/device/domain/entity/device_export_result.dart';
+import 'package:xuna_mobile/features/device/domain/repository/device_export_repository.dart';
+import 'package:xuna_mobile/features/device/domain/usecase/export_device_data_use_case.dart';
+import 'package:xuna_mobile/features/device/domain/usecase/read_pet_identity_use_case.dart';
 import 'package:xuna_mobile/features/home/presentation/controller/home_controller.dart';
 import 'package:xuna_mobile/generated/locales.g.dart';
 
-HomeController _buildController(DeviceRepository repository) => HomeController(
+class _RecordingExports implements DeviceExportRepository {
+  final saved = <DeviceExport>[];
+  @override
+  Future<DeviceExportResult> save(DeviceExport export) async {
+    saved.add(export);
+    return const DeviceExportResult(
+        location: '/exports/x.json', sha256: '0123456789abcdef');
+  }
+}
+
+class _IdentityTransport extends SimulatorDeviceBleDataSource {
+  @override
+  bool get supportsIdentity => true;
+  @override
+  Future<PetIdentityModel?> readIdentity() async => PetIdentityModel(
+        petId: Uint8List.fromList(List.generate(16, (i) => i)),
+        originCode: 3,
+        snapshotGeneration: 33,
+      );
+}
+
+HomeController _buildController(DeviceRepository repository,
+        {DeviceExportRepository? exports}) =>
+    HomeController(
       isSimulator: true,
       scanDevices: ScanDevicesUseCase(repository),
       connectDevice: ConnectDeviceUseCase(repository),
@@ -38,6 +67,9 @@ HomeController _buildController(DeviceRepository repository) => HomeController(
       readMemories: ReadMemoriesUseCase(repository),
       readExplanation: ReadLearningExplanationUseCase(repository),
       forgetMemories: ForgetMemoriesUseCase(repository),
+      readPetIdentity: ReadPetIdentityUseCase(repository),
+      exportDeviceData:
+          ExportDeviceDataUseCase(repository, exports ?? _RecordingExports()),
       parseTextIntent: const ParseTextIntentUseCase(),
       extractCandidate: const ExtractCandidateUseCase(),
       confirmCandidate: ConfirmCandidateUseCase(repository),
@@ -81,6 +113,26 @@ class _FakeNavigator extends Fake implements AppNavigator {
     Alignment? align,
   }) =>
       snackBars.add(message);
+
+  final infoDialogs = <String>[];
+
+  @override
+  Future<void>? showInfoDialog({
+    required String title,
+    required String subtitle,
+    required DialogIconType iconType,
+    bool swapTitleAndIcon = false,
+    String? confirmTitle,
+    String? cancelTitle,
+    VoidCallback? onConfirm,
+    VoidCallback? onCancel,
+    bool showConfirmButton = true,
+    bool showCancelButton = true,
+    bool barrierDismissible = false,
+  }) {
+    infoDialogs.add(subtitle);
+    return null;
+  }
 }
 
 void main() {
@@ -210,5 +262,39 @@ void main() {
       LocaleKeys.device_errorNoPendingSuggestion.tr,
     );
     expect((await repository.readLife()).events, 0);
+  });
+
+  test('export refuses without a durable PetId and never writes a file',
+      () async {
+    final exports = _RecordingExports();
+    final view = _buildController(repository, exports: exports)..onInit();
+    await view.connect(SimulatorDeviceBleDataSource.deviceId);
+    expect(view.identity.value, isNull);
+    await view.exportData();
+    expect(exports.saved, isEmpty);
+    expect(view.message.value, LocaleKeys.device_errorIdentityUnavailable.tr);
+    expect(navigator.infoDialogs, isEmpty);
+    view.onClose();
+  });
+
+  test('export reads identity and device data, then reports the file',
+      () async {
+    final exports = _RecordingExports();
+    final device = DeviceRepositoryImpl(_IdentityTransport());
+    final view = _buildController(device, exports: exports)..onInit();
+    await view.exportData();
+    expect(exports.saved, isEmpty);
+    await view.connect(SimulatorDeviceBleDataSource.deviceId);
+    expect(view.identity.value?.petId, '000102030405060708090a0b0c0d0e0f');
+    await view.exportData();
+    final saved = exports.saved.single;
+    expect(saved.identity.snapshotGeneration, 33);
+    expect(saved.capabilities.identity, isTrue);
+    expect(saved.life.events, 0);
+    expect(navigator.infoDialogs, hasLength(1));
+    await view.disconnect();
+    expect(view.identity.value, isNull);
+    view.onClose();
+    device.onClose();
   });
 }

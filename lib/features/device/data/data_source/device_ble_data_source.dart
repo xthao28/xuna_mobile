@@ -3,6 +3,7 @@ import 'package:xuna_mobile/features/device/data/model/device_command_model.dart
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
+import 'package:xuna_mobile/features/device/data/model/pet_identity_model.dart';
 
 /// BLE transport to one XUNA device, protocol v1.
 ///
@@ -12,6 +13,10 @@ import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart
 abstract interface class DeviceBleDataSource {
   bool get supportsStatedPreference;
   bool get supportsTimeSync;
+  bool get supportsIdentity;
+
+  /// Returns null for firmware without the Identity V1 capability.
+  Future<PetIdentityModel?> readIdentity();
 
   /// Returns null for firmware without the additive explanation capability.
   Future<LearningExplanationModel?> readExplanation();

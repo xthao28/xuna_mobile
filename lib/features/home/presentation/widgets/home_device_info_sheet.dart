@@ -7,9 +7,12 @@ import 'package:xuna_mobile/shared/widgets/widget_src.dart';
 
 /// Static facts about the supported prototype board and protocol.
 class HomeDeviceInfoSheet extends StatelessWidget {
-  const HomeDeviceInfoSheet({super.key, required this.onClose});
+  const HomeDeviceInfoSheet({super.key, required this.onClose, this.petId});
 
   final VoidCallback onClose;
+
+  /// Device-reported PetId, or null when not connected or unsupported.
+  final String? petId;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +22,12 @@ class HomeDeviceInfoSheet extends StatelessWidget {
       (LocaleKeys.home_infoScreen.tr, LocaleKeys.home_infoScreenValue.tr),
       (LocaleKeys.home_infoLink.tr, LocaleKeys.home_infoLinkValue.tr),
       (LocaleKeys.home_infoProtocol.tr, LocaleKeys.home_infoProtocolValue.tr),
+      (
+        LocaleKeys.home_infoPetId.tr,
+        petId == null
+            ? LocaleKeys.home_infoPetIdUnavailable.tr
+            : '${petId!.substring(0, 8)}…',
+      ),
     ];
     return AppSheetFrame(
       eyebrow: LocaleKeys.home_infoEyebrow.tr,

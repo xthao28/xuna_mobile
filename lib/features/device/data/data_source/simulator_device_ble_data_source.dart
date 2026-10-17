@@ -8,6 +8,7 @@ import 'package:xuna_mobile/features/device/data/model/device_command_model.dart
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
+import 'package:xuna_mobile/features/device/data/model/pet_identity_model.dart';
 import 'package:xuna_mobile/features/device/domain/exception/device_exception.dart';
 
 /// Development fake of the BLE transport, selected with
@@ -32,6 +33,18 @@ class SimulatorDeviceBleDataSource implements DeviceBleDataSource {
   // The simulator has no wall-clock/day-part model, so it must not claim the
   // production capability or keep a six-hour transport timer alive in UI tests.
   bool get supportsTimeSync => false;
+
+  // A fake transport has no durable PetId; never fabricate one, so simulator
+  // data can never be exported as a board pet.
+  @override
+  bool get supportsIdentity => false;
+
+  @override
+  Future<PetIdentityModel?> readIdentity() async {
+    _requireConnection();
+    return null;
+  }
+
   SimulatorDeviceBleDataSource({
     this.happyDuration = const Duration(milliseconds: 2400),
   });

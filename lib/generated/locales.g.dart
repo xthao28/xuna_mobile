@@ -9,6 +9,15 @@ class AppTranslation {
 }
 
 class LocaleKeys {
+  static const device_errorIdentityUnavailable =
+      'device_errorIdentityUnavailable';
+  static const device_errorExportFailed = 'device_errorExportFailed';
+  static const home_exportButton = 'home_exportButton';
+  static const home_exportNote = 'home_exportNote';
+  static const home_exportDoneTitle = 'home_exportDoneTitle';
+  static const home_exportDoneMessage = 'home_exportDoneMessage';
+  static const home_infoPetId = 'home_infoPetId';
+  static const home_infoPetIdUnavailable = 'home_infoPetIdUnavailable';
   LocaleKeys._();
   static const app_name = 'app_name';
   static const app_somethingWentWrong = 'app_somethingWentWrong';
@@ -221,6 +230,17 @@ class LocaleKeys {
 
 class Locales {
   static const vi_VN = {
+    'device_errorIdentityUnavailable':
+        'XUNA chưa báo được PetId (firmware cũ, chưa nở hoặc đang dùng simulator) nên chưa xuất được.',
+    'device_errorExportFailed':
+        'Không lưu được file xuất trên điện thoại. Hãy thử lại.',
+    'home_exportButton': 'Xuất dữ liệu XUNA (JSON)',
+    'home_exportNote':
+        'Chỉ đọc dữ liệu từ thiết bị rồi lưu một file JSON trên điện thoại. Không gửi lên mạng, không dạy XUNA điều gì.',
+    'home_exportDoneTitle': 'Đã xuất dữ liệu',
+    'home_exportDoneMessage': 'Đã lưu tại @path\nSHA-256: @hash…',
+    'home_infoPetId': 'PetId',
+    'home_infoPetIdUnavailable': 'Chưa đọc được',
     'app_name': 'XUNA',
     'app_somethingWentWrong': 'Đã có lỗi xảy ra, vui lòng thử lại sau.',
     'app_cannotConnectToServer':

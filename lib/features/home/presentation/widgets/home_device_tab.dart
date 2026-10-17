@@ -29,6 +29,7 @@ class HomeDeviceTab extends StatelessWidget {
     required this.onDisconnect,
     required this.onAnimation,
     required this.onInfo,
+    required this.onExport,
     required this.onComingSoon,
   });
 
@@ -46,6 +47,9 @@ class HomeDeviceTab extends StatelessWidget {
   final VoidCallback onDisconnect;
   final ValueChanged<AnimationState> onAnimation;
   final VoidCallback onInfo;
+
+  /// Writes a local JSON export of device data; read-only.
+  final VoidCallback onExport;
   final VoidCallback onComingSoon;
 
   @override
@@ -131,6 +135,17 @@ class HomeDeviceTab extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: AppDimens.defaultPadding),
+        AppBoxButton(
+          label: LocaleKeys.home_exportButton.tr,
+          onPressed: connected && !isBusy ? onExport : null,
+        ),
+        const SizedBox(height: AppDimens.padding6),
+        Text(
+          LocaleKeys.home_exportNote.tr,
+          style: AppTextStyle.font13Re.copyWith(color: AppColors.xunaInkMuted),
+          maxLines: 3,
         ),
         const SizedBox(height: AppDimens.padding22),
         Text(LocaleKeys.home_settingsTitle.tr, style: AppTextStyle.display19),

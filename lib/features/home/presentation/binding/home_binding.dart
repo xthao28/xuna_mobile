@@ -26,6 +26,24 @@ class HomeBinding extends BaseBindings {
           : DeviceBleDataSourceImpl(),
     );
     Get.lazyPut<DeviceRepository>(() => DeviceRepositoryImpl(sl()));
+    Get.lazyPut<DeviceExportLocalDataSource>(
+      () => DeviceExportLocalDataSourceImpl(),
+    );
+    Get.lazyPut<DeviceExportRepository>(
+      () => DeviceExportRepositoryImpl(
+        sl(),
+        appVersion: _appVersion(),
+      ),
+    );
+  }
+
+  /// `versionName+versionCode`, or `unknown` before AppInfo is ready.
+  static String _appVersion() {
+    if (!Get.isRegistered<AppInfo>()) return 'unknown';
+    final info = sl<AppInfo>();
+    return info.versionName.isEmpty
+        ? 'unknown'
+        : '${info.versionName}+${info.versionCode}';
   }
 
   @override
@@ -41,6 +59,8 @@ class HomeBinding extends BaseBindings {
     Get.lazyPut(() => ReadMemoriesUseCase(sl()));
     Get.lazyPut(() => ReadLearningExplanationUseCase(sl()));
     Get.lazyPut(() => ForgetMemoriesUseCase(sl()));
+    Get.lazyPut(() => ReadPetIdentityUseCase(sl()));
+    Get.lazyPut(() => ExportDeviceDataUseCase(sl(), sl()));
     Get.lazyPut(() => const ParseTextIntentUseCase());
     Get.lazyPut(() => const ExtractCandidateUseCase());
     Get.lazyPut(() => ConfirmCandidateUseCase(sl()));
@@ -62,6 +82,8 @@ class HomeBinding extends BaseBindings {
         readMemories: sl(),
         readExplanation: sl(),
         forgetMemories: sl(),
+        readPetIdentity: sl(),
+        exportDeviceData: sl(),
         parseTextIntent: sl(),
         extractCandidate: sl(),
         confirmCandidate: sl(),

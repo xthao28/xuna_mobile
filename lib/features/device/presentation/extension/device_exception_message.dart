@@ -30,5 +30,9 @@ extension DeviceExceptionMessage on DeviceException {
           LocaleKeys.device_errorInvalidResponse.tr,
         DeviceExceptionKind.communicationFailed =>
           LocaleKeys.device_errorCommunicationFailed.tr,
+        DeviceExceptionKind.identityUnavailable =>
+          LocaleKeys.device_errorIdentityUnavailable.tr,
+        DeviceExceptionKind.exportFailed =>
+          LocaleKeys.device_errorExportFailed.tr,
       };
 }
