@@ -18,5 +18,25 @@ extension AccountExceptionMessage on AccountException {
           LocaleKeys.account_errorCloudUnavailable.tr,
         AccountExceptionKind.cloudRejected =>
           LocaleKeys.account_errorCloudRejected.tr,
+        AccountExceptionKind.deviceProofUnsupported =>
+          LocaleKeys.account_errorDeviceProofUnsupported.tr,
+        AccountExceptionKind.challengeInvalid =>
+          LocaleKeys.account_errorChallengeInvalid.tr,
+        AccountExceptionKind.invalidSignature =>
+          LocaleKeys.account_errorInvalidSignature.tr,
+        AccountExceptionKind.petAlreadyBound =>
+          LocaleKeys.account_errorPetAlreadyBound.tr,
+        AccountExceptionKind.deviceKeyMismatch =>
+          LocaleKeys.account_errorDeviceKeyMismatch.tr,
+        AccountExceptionKind.petNotFound =>
+          LocaleKeys.account_errorPetNotFound.tr,
+        AccountExceptionKind.consentRequired =>
+          LocaleKeys.account_errorConsentRequired.tr,
+        AccountExceptionKind.consentVersionConflict =>
+          LocaleKeys.account_errorConsentVersionConflict.tr,
+        AccountExceptionKind.providerUnavailable =>
+          LocaleKeys.account_errorProviderUnavailable.tr,
+        AccountExceptionKind.invalidInput =>
+          LocaleKeys.account_errorInvalidInput.tr,
       };
 }

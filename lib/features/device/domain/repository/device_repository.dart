@@ -1,5 +1,6 @@
 import 'package:xuna_mobile/features/device/domain/entity/learning_explanation.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
+import 'package:xuna_mobile/features/device/domain/entity/device_bind_proof.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
 import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
 import 'package:xuna_mobile/features/device/domain/entity/life_summary.dart';
@@ -15,6 +16,15 @@ abstract interface class DeviceRepository {
   bool get supportsStatedPreference;
   bool get supportsTimeSync;
   bool get supportsIdentity;
+
+  /// Identity V2: the device can sign a bind proof with its own key.
+  bool get supportsDeviceProof;
+
+  /// Asks the device to sign a bind proof over the backend [nonce] (32
+  /// bytes). Throws [DeviceException] `unsupportedDevice` without the
+  /// capability, `proofUnavailable`/`proofFailed` when the device refuses,
+  /// and `timeout` (never resent).
+  Future<DeviceBindProof> requestBindProof(List<int> nonce);
 
   /// Returns null for firmware without the Identity V1 capability or when
   /// the device has no ready identity yet.

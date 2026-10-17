@@ -1,10 +1,12 @@
 import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:xuna_mobile/features/device/data/codec/device_protocol.dart';
 import 'package:xuna_mobile/features/device/data/codec/protocol_codec.dart';
 import 'package:xuna_mobile/features/device/data/data_source/device_ble_data_source.dart';
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
+import 'package:xuna_mobile/features/device/data/model/device_proof_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
@@ -43,6 +45,16 @@ class SimulatorDeviceBleDataSource implements DeviceBleDataSource {
   Future<PetIdentityModel?> readIdentity() async {
     _requireConnection();
     return null;
+  }
+
+  // No device key: a simulator must never fabricate a device proof.
+  @override
+  bool get supportsDeviceProof => false;
+
+  @override
+  Future<DeviceProofModel> requestBindProof(Uint8List nonce) async {
+    _requireConnection();
+    throw const DeviceException(DeviceExceptionKind.unsupportedDevice);
   }
 
   SimulatorDeviceBleDataSource({

@@ -16,8 +16,14 @@ import 'package:xuna_mobile/shared/exceptions/base/app_exception.dart';
 enum HomeTab { home, chat, journal, device }
 
 /// One line of the on-screen conversation. Kept in memory only: never
-/// persisted or logged (AGENTS §6.4).
-typedef HomeChatMessage = ({bool fromXuna, String text, DateTime at});
+/// persisted or logged (AGENTS §6.4). [generated] marks AI provider text,
+/// which is display-only and never teaches XUNA.
+typedef HomeChatMessage = ({
+  bool fromXuna,
+  String text,
+  DateTime at,
+  bool generated,
+});
 
 class HomeController extends BaseGetxController {
   HomeController({
@@ -39,6 +45,11 @@ class HomeController extends BaseGetxController {
     required SignInWithGoogleUseCase signInWithGoogle,
     required SignOutUseCase signOut,
     required CheckCloudConnectionUseCase checkCloudConnection,
+    required BindPetToCloudUseCase bindPetToCloud,
+    required ReadCloudPetsUseCase readCloudPets,
+    required ReadConsentsUseCase readConsents,
+    required UpdateConsentsUseCase updateConsents,
+    required StreamCloudReplyUseCase streamCloudReply,
     required ParseTextIntentUseCase parseTextIntent,
     required ExtractCandidateUseCase extractCandidate,
     required ConfirmCandidateUseCase confirmCandidate,
@@ -59,6 +70,11 @@ class HomeController extends BaseGetxController {
         _signInWithGoogle = signInWithGoogle,
         _signOut = signOut,
         _checkCloudConnection = checkCloudConnection,
+        _bindPetToCloud = bindPetToCloud,
+        _readCloudPets = readCloudPets,
+        _readConsents = readConsents,
+        _updateConsents = updateConsents,
+        _streamCloudReply = streamCloudReply,
         _parseTextIntent = parseTextIntent,
         _extractCandidate = extractCandidate,
         _confirmCandidate = confirmCandidate;
@@ -83,6 +99,11 @@ class HomeController extends BaseGetxController {
   final SignInWithGoogleUseCase _signInWithGoogle;
   final SignOutUseCase _signOut;
   final CheckCloudConnectionUseCase _checkCloudConnection;
+  final BindPetToCloudUseCase _bindPetToCloud;
+  final ReadCloudPetsUseCase _readCloudPets;
+  final ReadConsentsUseCase _readConsents;
+  final UpdateConsentsUseCase _updateConsents;
+  final StreamCloudReplyUseCase _streamCloudReply;
   final ParseTextIntentUseCase _parseTextIntent;
   final ExtractCandidateUseCase _extractCandidate;
   final ConfirmCandidateUseCase _confirmCandidate;
@@ -109,6 +130,15 @@ class HomeController extends BaseGetxController {
   /// Optional cloud account (Firebase Auth); unrelated to pet authority.
   final account = Rxn<Account>();
 
+  /// Pets bound to [account] on XUNA Cloud; empty when signed out or unknown.
+  final cloudPets = <CloudPet>[].obs;
+
+  /// Server consent state; null until read (treated as U0: all off).
+  final consents = Rxn<ConsentSettings>();
+
+  /// Unsaved choices in the consent sheet.
+  final consentDraft = Rxn<ConsentSettings>();
+
   /// On-screen conversation, newest last.
   final messages = <HomeChatMessage>[].obs;
 
@@ -123,13 +153,27 @@ class HomeController extends BaseGetxController {
 
   bool get isBusy => isLoading.value || isLoadingOverlay.value;
 
+  /// The connected device's pet when it is bound to the signed-in account.
+  CloudPet? get boundPet {
+    final petId = identity.value?.petId;
+    if (account.value == null || petId == null) return null;
+    return cloudPets.firstWhereOrNull((pet) => pet.petId == petId);
+  }
+
+  /// AI replies need an account, the connected pet bound to it and U3 on;
+  /// otherwise XUNA answers with its local templates.
+  bool get cloudChatReady =>
+      connected.value &&
+      boundPet != null &&
+      consents.value?.conversationText == true;
+
   @override
   void onInit() {
     super.onInit();
     _say(LocaleKeys.home_replyIntro.tr);
     _accountSubscription = _watchAccount.execute().listen(
-          (value) => account.value = value,
-          onError: (Object _) => account.value = null,
+          _onAccount,
+          onError: (Object _) => _onAccount(null),
         );
     _statusSubscription = _watchDeviceStatus.execute().listen(
       (status) {
@@ -221,7 +265,8 @@ class HomeController extends BaseGetxController {
   Future<void> submitText(String input) async {
     final text = input.trim();
     if (text.isEmpty || isBusy) return;
-    _append((fromXuna: false, text: text, at: DateTime.now()));
+    _append(
+        (fromXuna: false, text: text, at: DateTime.now(), generated: false));
     if (!connected.value) {
       _say(LocaleKeys.home_replyNeedConnection.tr);
       return;
@@ -276,9 +321,50 @@ class HomeController extends BaseGetxController {
             : LocaleKeys.home_replyConfirmRejected;
         _say(template.trParams({'action': life.value.action.label}));
       case TextIntent.unknown:
-        _say(LocaleKeys.home_replyUnknown.tr);
+        final pet = boundPet;
+        if (cloudChatReady && pet != null) {
+          await _replyFromCloud(pet.petId, text);
+        } else {
+          _say(LocaleKeys.home_replyUnknown.tr);
+        }
     }
   }
+
+  /// Streams an AI reply into one XUNA bubble. Any failure (provider down,
+  /// consent revoked elsewhere, no network) falls back to the local template.
+  /// The reply is display text only: it is never parsed or stored.
+  Future<void> _replyFromCloud(String petId, String text) => _run(() async {
+        final at = DateTime.now();
+        HomeChatMessage? shown;
+        var reply = '';
+        await for (final event
+            in _streamCloudReply.execute((petId: petId, text: text))) {
+          switch (event) {
+            case CloudReplyDelta(text: final delta):
+              reply += delta;
+              final line = (
+                fromXuna: true,
+                text: reply,
+                at: at,
+                generated: true,
+              );
+              if (shown != null &&
+                  messages.isNotEmpty &&
+                  messages.last == shown) {
+                messages[messages.length - 1] = line;
+              } else {
+                _append(line);
+              }
+              shown = line;
+            case CloudReplyUnavailable(reason: final reason):
+              if (reason == AccountExceptionKind.consentRequired ||
+                  reason == AccountExceptionKind.petNotFound) {
+                unawaited(refreshCloud());
+              }
+          }
+        }
+        if (shown == null) _say(LocaleKeys.home_replyUnknown.tr);
+      });
 
   void cancelCandidate() {
     candidate.value = null;
@@ -385,12 +471,12 @@ class HomeController extends BaseGetxController {
       });
 
   Future<void> signIn() => _run(() async {
-        account.value = await _signInWithGoogle.execute();
+        _onAccount(await _signInWithGoogle.execute());
       });
 
   Future<void> signOut() => _run(() async {
         await _signOut.execute();
-        account.value = null;
+        _onAccount(null);
         _toast(LocaleKeys.account_signedOutToast.tr);
       });
 
@@ -399,6 +485,75 @@ class HomeController extends BaseGetxController {
         await _checkCloudConnection.execute();
         _toast(LocaleKeys.account_cloudOk.tr);
       });
+
+  /// Challenge → device proof over BLE → bind on XUNA Cloud.
+  Future<void> bindPet() => _run(() async {
+        if (!connected.value || account.value == null) return;
+        final pet = await _bindPetToCloud.execute();
+        cloudPets
+          ..removeWhere((item) => item.petId == pet.petId)
+          ..add(pet);
+        _toast(LocaleKeys.account_bindDone.tr);
+      });
+
+  /// Quietly reloads bound pets and consents. A missing backend or network
+  /// only leaves the cloud features off; local life is unaffected.
+  Future<void> refreshCloud() => buildState(
+        action: () async {
+          if (account.value == null) return;
+          cloudPets.assignAll(await _readCloudPets.execute());
+          consents.value = await _readConsents.execute();
+        },
+        onError: (_) => null,
+      );
+
+  /// Loads the server state into the consent sheet draft; the draft stays
+  /// null when it cannot be read, so the sheet never shows stale choices.
+  Future<void> prepareConsents() {
+    consentDraft.value = null;
+    return _run(() async {
+      final current = await _readConsents.execute();
+      consents.value = current;
+      consentDraft.value = current;
+    });
+  }
+
+  void editConsentDraft({
+    bool? aggregateMetrics,
+    bool? experienceEvents,
+    bool? conversationText,
+  }) {
+    final draft = consentDraft.value;
+    if (draft == null || isBusy) return;
+    consentDraft.value = draft.copyWith(
+      aggregateMetrics: aggregateMetrics,
+      experienceEvents: experienceEvents,
+      conversationText: conversationText,
+    );
+  }
+
+  /// Saves the owner's explicit choices; a version conflict reloads the
+  /// server state into the sheet once the failed save has finished.
+  Future<void> saveConsents() async {
+    final draft = consentDraft.value;
+    if (draft == null || isBusy) return;
+    var conflict = false;
+    await buildState(
+      showLoading: true,
+      action: () async {
+        final saved = await _updateConsents.execute(draft);
+        consents.value = saved;
+        consentDraft.value = saved;
+        _toast(LocaleKeys.account_consentSaved.tr);
+      },
+      onError: (error) {
+        conflict = error is AccountException &&
+            error.kind == AccountExceptionKind.consentVersionConflict;
+        return _handleError(error);
+      },
+    );
+    if (conflict) await prepareConsents();
+  }
 
   Future<void> disconnect() => _run(() async {
         await _disconnectDevice.execute();
@@ -417,13 +572,23 @@ class HomeController extends BaseGetxController {
     super.onClose();
   }
 
+  void _onAccount(Account? value) {
+    final changed = value?.uid != account.value?.uid;
+    account.value = value;
+    if (!changed) return;
+    cloudPets.clear();
+    consents.value = null;
+    consentDraft.value = null;
+    if (value != null) unawaited(refreshCloud());
+  }
+
   Future<void> _refreshLife() async {
     life.value = await _readLifeSummary.execute();
     memories.assignAll(await _readMemories.execute());
   }
 
-  void _say(String text) =>
-      _append((fromXuna: true, text: text, at: DateTime.now()));
+  void _say(String text) => _append(
+      (fromXuna: true, text: text, at: DateTime.now(), generated: false));
 
   void _append(HomeChatMessage line) {
     messages.add(line);

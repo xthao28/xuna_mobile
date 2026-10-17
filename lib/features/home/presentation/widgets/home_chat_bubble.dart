@@ -11,6 +11,7 @@ class HomeChatBubble extends StatelessWidget {
     required this.text,
     required this.time,
     required this.fromXuna,
+    this.tag,
   });
 
   static const _avatarSize = 46.0;
@@ -20,6 +21,9 @@ class HomeChatBubble extends StatelessWidget {
   final String text;
   final String time;
   final bool fromXuna;
+
+  /// Short label before [time], e.g. that the text came from an AI service.
+  final String? tag;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +36,9 @@ class HomeChatBubble extends StatelessWidget {
       ),
       child: Text(text, style: AppTextStyle.font16Body, maxLines: 12),
     );
+    final label = tag;
     final stamp = Text(
-      time,
+      label == null ? time : '$label · $time',
       style: AppTextStyle.mono10Re.copyWith(color: AppColors.xunaInkSoft),
     );
     return LayoutBuilder(

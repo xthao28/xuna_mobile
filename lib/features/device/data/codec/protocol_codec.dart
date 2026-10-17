@@ -121,6 +121,12 @@ abstract final class ProtocolCodec {
     return (bytes[2] & DeviceProtocol.capabilityIdentity) != 0;
   }
 
+  /// Identity V2 device proof: capability byte 3 bit 0.
+  static bool supportsDeviceProof(Uint8List bytes) {
+    validateCapabilities(bytes);
+    return (bytes[3] & DeviceProtocol.capabilityDeviceProof) != 0;
+  }
+
   /// Identity V1: version, size, petId[16], origin, reserved, generation
   /// u32 LE. A device without a ready identity sends only version and size.
   static PetIdentityModel decodeIdentity(Uint8List bytes) {

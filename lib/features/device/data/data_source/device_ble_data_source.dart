@@ -1,5 +1,8 @@
 import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
+import 'dart:typed_data';
+
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
+import 'package:xuna_mobile/features/device/data/model/device_proof_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
@@ -14,6 +17,15 @@ abstract interface class DeviceBleDataSource {
   bool get supportsStatedPreference;
   bool get supportsTimeSync;
   bool get supportsIdentity;
+
+  /// Identity V2 device proof (capability byte 3 bit 0).
+  bool get supportsDeviceProof;
+
+  /// Writes one bind proof request with [nonce] and reads `7a6e000d` until
+  /// the device answers that request. Throws `DeviceException`
+  /// `unsupportedDevice` without the capability and `timeout` when no answer
+  /// arrives; a timed-out request is never resent.
+  Future<DeviceProofModel> requestBindProof(Uint8List nonce);
 
   /// Returns null for firmware without the Identity V1 capability.
   Future<PetIdentityModel?> readIdentity();

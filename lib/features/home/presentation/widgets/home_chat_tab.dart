@@ -122,6 +122,7 @@ class HomeChatTab extends StatelessWidget {
                 text: message.text,
                 time: _clock(message.at),
                 fromXuna: message.fromXuna,
+                tag: message.generated ? LocaleKeys.home_chatAiTag.tr : null,
               );
             },
           ),

@@ -28,6 +28,13 @@ enum DeviceExceptionKind {
 
   /// The export file could not be written locally.
   exportFailed,
+
+  /// The device cannot sign a proof now (no key or identity yet, or the
+  /// purpose is not supported).
+  proofUnavailable,
+
+  /// The device refused the proof request or signing failed.
+  proofFailed,
 }
 
 /// Failures of the device feature. Carries no UI text: presentation maps

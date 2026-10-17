@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:typed_data';
 import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/read_learning_explanation_use_case.dart';
@@ -23,6 +22,7 @@ import 'package:xuna_mobile/features/device/domain/usecase/scan_devices_use_case
 import 'package:xuna_mobile/features/device/domain/usecase/send_feedback_use_case.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/suggest_action_use_case.dart';
 import 'package:xuna_mobile/features/device/domain/usecase/watch_device_status_use_case.dart';
+import 'package:xuna_mobile/features/device/data/model/device_proof_model.dart';
 import 'package:xuna_mobile/features/device/data/model/pet_identity_model.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_export.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_export_result.dart';
@@ -32,6 +32,8 @@ import 'package:xuna_mobile/features/device/domain/usecase/read_pet_identity_use
 import 'package:xuna_mobile/features/account/domain/domain.src.dart';
 import 'package:xuna_mobile/features/home/presentation/controller/home_controller.dart';
 import 'package:xuna_mobile/generated/locales.g.dart';
+
+import '../../../../helpers/fake_cloud.dart';
 
 class _RecordingExports implements DeviceExportRepository {
   final saved = <DeviceExport>[];
@@ -54,36 +56,26 @@ class _IdentityTransport extends SimulatorDeviceBleDataSource {
       );
 }
 
-class _FakeAccounts implements AccountRepository, CloudRepository {
-  final _changes = StreamController<Account?>.broadcast();
-  AccountException? signInError;
-  AccountException? cloudError;
-  int cloudCalls = 0;
+class _FakeAccounts extends FakeCloud {}
+
+/// Identity V2 board: durable PetId and a device proof.
+class _ProofTransport extends _IdentityTransport {
+  int proofs = 0;
 
   @override
-  Stream<Account?> watchAccount() => _changes.stream;
+  bool get supportsDeviceProof => true;
 
   @override
-  Future<Account> signInWithGoogle() async {
-    final error = signInError;
-    if (error != null) throw error;
-    const account = Account(uid: 'u1', email: 'owner@example.com');
-    _changes.add(account);
-    return account;
-  }
-
-  @override
-  Future<void> signOut() async => _changes.add(null);
-
-  @override
-  Future<String> idToken() async => 'token';
-
-  @override
-  Future<CloudProfile> fetchProfile() async {
-    cloudCalls++;
-    final error = cloudError;
-    if (error != null) throw error;
-    return const CloudProfile(userId: 'xuna-user');
+  Future<DeviceProofModel> requestBindProof(Uint8List nonce) async {
+    proofs++;
+    return DeviceProofModel(
+      purpose: 1,
+      status: 2,
+      requestId: 1,
+      generation: 34,
+      publicKey: Uint8List(65)..[0] = 4,
+      signature: Uint8List(64)..[0] = 1,
+    );
   }
 }
 
@@ -110,6 +102,12 @@ HomeController _buildController(DeviceRepository repository,
       signOut: SignOutUseCase(accounts ?? _FakeAccounts()),
       checkCloudConnection:
           CheckCloudConnectionUseCase(accounts ?? _FakeAccounts()),
+      bindPetToCloud:
+          BindPetToCloudUseCase(repository, accounts ?? _FakeAccounts()),
+      readCloudPets: ReadCloudPetsUseCase(accounts ?? _FakeAccounts()),
+      readConsents: ReadConsentsUseCase(accounts ?? _FakeAccounts()),
+      updateConsents: UpdateConsentsUseCase(accounts ?? _FakeAccounts()),
+      streamCloudReply: StreamCloudReplyUseCase(accounts ?? _FakeAccounts()),
       parseTextIntent: const ParseTextIntentUseCase(),
       extractCandidate: const ExtractCandidateUseCase(),
       confirmCandidate: ConfirmCandidateUseCase(repository),
@@ -194,6 +192,7 @@ void main() {
   });
 
   String lastReply() => controller.messages.last.text;
+  String lastReplyOf(HomeController view) => view.messages.last.text;
 
   test(
       'text feedback requires confirmation, stores provenance, unknown text never learns',
@@ -371,5 +370,131 @@ void main() {
     await view.connect(SimulatorDeviceBleDataSource.deviceId);
     expect(view.connected.value, isTrue);
     view.onClose();
+  });
+
+  group('XUNA Cloud bind, consent and AI chat', () {
+    const petId = '000102030405060708090a0b0c0d0e0f';
+    late _FakeAccounts accounts;
+    late DeviceRepositoryImpl device;
+    late HomeController view;
+
+    setUp(() async {
+      accounts = _FakeAccounts();
+      device = DeviceRepositoryImpl(_ProofTransport());
+      view = _buildController(device, accounts: accounts)..onInit();
+      await view.signIn();
+      await view.refreshCloud();
+      await view.connect(SimulatorDeviceBleDataSource.deviceId);
+    });
+
+    tearDown(() {
+      view.onClose();
+      device.onClose();
+    });
+
+    Future<void> enableU3() async {
+      await view.prepareConsents();
+      view.editConsentDraft(conversationText: true);
+      await view.saveConsents();
+    }
+
+    test('bind runs challenge → proof → bind and marks the pet bound',
+        () async {
+      expect(view.boundPet, isNull);
+      await view.bindPet();
+      expect(accounts.calls,
+          containsAllInOrder(['challenge:$petId', 'bind:$petId:34']));
+      expect(view.boundPet?.petId, petId);
+      expect(navigator.snackBars.last, LocaleKeys.account_bindDone.tr);
+    });
+
+    test('bind errors are localized and leave the pet unbound', () async {
+      accounts.bindError =
+          const AccountException(AccountExceptionKind.petAlreadyBound);
+      await view.bindPet();
+      expect(view.boundPet, isNull);
+      expect(
+          navigator.snackBars.last, LocaleKeys.account_errorPetAlreadyBound.tr);
+    });
+
+    test('consents start off and are saved only on request', () async {
+      await view.prepareConsents();
+      expect(view.consentDraft.value, const ConsentSettings());
+      view.editConsentDraft(conversationText: true);
+      expect(accounts.consents.conversationText, isFalse);
+      await view.saveConsents();
+      expect(accounts.calls.last, 'updateConsents:0');
+      expect(view.consents.value?.conversationText, isTrue);
+      expect(navigator.snackBars.last, LocaleKeys.account_consentSaved.tr);
+    });
+
+    test('a consent conflict reloads the server state', () async {
+      await view.prepareConsents();
+      accounts.consentError =
+          const AccountException(AccountExceptionKind.consentVersionConflict);
+      view.editConsentDraft(aggregateMetrics: true);
+      await view.saveConsents();
+      await Future<void>.delayed(Duration.zero);
+      expect(navigator.snackBars.last,
+          LocaleKeys.account_errorConsentVersionConflict.tr);
+      expect(view.consentDraft.value, accounts.consents);
+    });
+
+    test('free text uses the local template until bound with U3', () async {
+      await view.submitText('kể chuyện đi');
+      expect(lastReplyOf(view), LocaleKeys.home_replyUnknown.tr);
+      await view.bindPet();
+      await view.submitText('kể chuyện đi');
+      expect(lastReplyOf(view), LocaleKeys.home_replyUnknown.tr);
+      expect(accounts.repliedTexts, isEmpty);
+      expect(view.cloudChatReady, isFalse);
+    });
+
+    test('with U3 the AI reply streams into one labeled bubble', () async {
+      await view.bindPet();
+      await enableU3();
+      expect(view.cloudChatReady, isTrue);
+      final before = view.messages.length;
+      await view.submitText('  kể chuyện đi ');
+      expect(accounts.repliedTexts, ['kể chuyện đi']);
+      expect(view.messages.length, before + 2);
+      expect(view.messages.last.text, 'Chào bạn!');
+      expect(view.messages.last.generated, isTrue);
+      expect(view.messages.last.fromXuna, isTrue);
+      expect(view.isBusy, isFalse);
+      // Display only: nothing reached the device.
+      expect((await device.readLife()).events, 0);
+    });
+
+    test('teaching and device intents never go to the AI', () async {
+      await view.bindPet();
+      await enableU3();
+      await view.submitText('chơi');
+      await view.submitText('mình thích khi bạn tò mò');
+      expect(accounts.repliedTexts, isEmpty);
+    });
+
+    test('provider outage falls back to the local template', () async {
+      await view.bindPet();
+      await enableU3();
+      accounts
+        ..replyDeltas = const []
+        ..replyError =
+            const AccountException(AccountExceptionKind.providerUnavailable);
+      await view.submitText('kể chuyện đi');
+      expect(lastReplyOf(view), LocaleKeys.home_replyUnknown.tr);
+      expect(view.messages.last.generated, isFalse);
+      expect(navigator.snackBars.last, isNot(contains('AI')));
+    });
+
+    test('sign-out clears cloud state and turns AI chat off', () async {
+      await view.bindPet();
+      await enableU3();
+      await view.signOut();
+      expect(view.cloudPets, isEmpty);
+      expect(view.consents.value, isNull);
+      expect(view.cloudChatReady, isFalse);
+      expect(view.connected.value, isTrue);
+    });
   });
 }

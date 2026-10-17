@@ -76,6 +76,11 @@ class HomeBinding extends BaseBindings {
     Get.lazyPut(() => SignInWithGoogleUseCase(sl()));
     Get.lazyPut(() => SignOutUseCase(sl()));
     Get.lazyPut(() => CheckCloudConnectionUseCase(sl()));
+    Get.lazyPut(() => BindPetToCloudUseCase(sl(), sl()));
+    Get.lazyPut(() => ReadCloudPetsUseCase(sl()));
+    Get.lazyPut(() => ReadConsentsUseCase(sl()));
+    Get.lazyPut(() => UpdateConsentsUseCase(sl()));
+    Get.lazyPut(() => StreamCloudReplyUseCase(sl()));
     Get.lazyPut(() => const ParseTextIntentUseCase());
     Get.lazyPut(() => const ExtractCandidateUseCase());
     Get.lazyPut(() => ConfirmCandidateUseCase(sl()));
@@ -103,6 +108,11 @@ class HomeBinding extends BaseBindings {
         signInWithGoogle: sl(),
         signOut: sl(),
         checkCloudConnection: sl(),
+        bindPetToCloud: sl(),
+        readCloudPets: sl(),
+        readConsents: sl(),
+        updateConsents: sl(),
+        streamCloudReply: sl(),
         parseTextIntent: sl(),
         extractCandidate: sl(),
         confirmCandidate: sl(),

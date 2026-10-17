@@ -23,9 +23,46 @@ class LocaleKeys {
   static const account_errorNotSignedIn = 'account_errorNotSignedIn';
   static const account_errorNetwork = 'account_errorNetwork';
   static const account_errorSignInFailed = 'account_errorSignInFailed';
-  static const account_errorCloudNotConfigured = 'account_errorCloudNotConfigured';
+  static const account_errorCloudNotConfigured =
+      'account_errorCloudNotConfigured';
   static const account_errorCloudUnavailable = 'account_errorCloudUnavailable';
   static const account_errorCloudRejected = 'account_errorCloudRejected';
+  static const account_petUnbound = 'account_petUnbound';
+  static const account_petBound = 'account_petBound';
+  static const account_bind = 'account_bind';
+  static const account_bindNote = 'account_bindNote';
+  static const account_bindDone = 'account_bindDone';
+  static const account_consents = 'account_consents';
+  static const account_aiChatOn = 'account_aiChatOn';
+  static const account_aiChatOff = 'account_aiChatOff';
+  static const account_consentEyebrow = 'account_consentEyebrow';
+  static const account_consentTitle = 'account_consentTitle';
+  static const account_consentIntro = 'account_consentIntro';
+  static const account_consentU1Title = 'account_consentU1Title';
+  static const account_consentU1Note = 'account_consentU1Note';
+  static const account_consentU2Title = 'account_consentU2Title';
+  static const account_consentU2Note = 'account_consentU2Note';
+  static const account_consentU3Title = 'account_consentU3Title';
+  static const account_consentU3Note = 'account_consentU3Note';
+  static const account_consentSave = 'account_consentSave';
+  static const account_consentSaved = 'account_consentSaved';
+  static const account_errorDeviceProofUnsupported =
+      'account_errorDeviceProofUnsupported';
+  static const account_errorChallengeInvalid = 'account_errorChallengeInvalid';
+  static const account_errorInvalidSignature = 'account_errorInvalidSignature';
+  static const account_errorPetAlreadyBound = 'account_errorPetAlreadyBound';
+  static const account_errorDeviceKeyMismatch =
+      'account_errorDeviceKeyMismatch';
+  static const account_errorPetNotFound = 'account_errorPetNotFound';
+  static const account_errorConsentRequired = 'account_errorConsentRequired';
+  static const account_errorConsentVersionConflict =
+      'account_errorConsentVersionConflict';
+  static const account_errorProviderUnavailable =
+      'account_errorProviderUnavailable';
+  static const account_errorInvalidInput = 'account_errorInvalidInput';
+  static const device_errorProofUnavailable = 'device_errorProofUnavailable';
+  static const device_errorProofFailed = 'device_errorProofFailed';
+  static const home_chatAiTag = 'home_chatAiTag';
   static const device_errorIdentityUnavailable =
       'device_errorIdentityUnavailable';
   static const device_errorExportFailed = 'device_errorExportFailed';
@@ -248,22 +285,28 @@ class LocaleKeys {
 class Locales {
   static const vi_VN = {
     'account_title': 'TÀI KHOẢN',
-    'account_note': 'Không bắt buộc. Thú cưng vẫn sống trên thiết bị khi bạn không đăng nhập.',
+    'account_note':
+        'Không bắt buộc. Thú cưng vẫn sống trên thiết bị khi bạn không đăng nhập.',
     'account_signedOut': 'Chưa đăng nhập',
     'account_signedInAs': 'Đang đăng nhập: @name',
     'account_signIn': 'Đăng nhập với Google',
     'account_signOut': 'Đăng xuất',
     'account_checkCloud': 'Kiểm tra kết nối XUNA Cloud',
     'account_cloudOk': 'Đã kết nối XUNA Cloud.',
-    'account_signedOutToast': 'Đã đăng xuất. Thú cưng trên thiết bị không bị ảnh hưởng.',
+    'account_signedOutToast':
+        'Đã đăng xuất. Thú cưng trên thiết bị không bị ảnh hưởng.',
     'account_errorNotConfigured': 'Bản app này chưa cấu hình tài khoản Cloud.',
     'account_errorCancelled': 'Đã huỷ đăng nhập.',
     'account_errorNotSignedIn': 'Hãy đăng nhập trước.',
     'account_errorNetwork': 'Không có mạng. Hãy thử lại.',
-    'account_errorSignInFailed': 'Đăng nhập Google không thành công. Hãy thử lại.',
-    'account_errorCloudNotConfigured': 'Bản app này chưa có địa chỉ máy chủ XUNA Cloud.',
-    'account_errorCloudUnavailable': 'Chưa kết nối được XUNA Cloud. XUNA vẫn sống bình thường trên thiết bị.',
-    'account_errorCloudRejected': 'XUNA Cloud không chấp nhận phiên đăng nhập. Hãy đăng nhập lại.',
+    'account_errorSignInFailed':
+        'Đăng nhập Google không thành công. Hãy thử lại.',
+    'account_errorCloudNotConfigured':
+        'Bản app này chưa có địa chỉ máy chủ XUNA Cloud.',
+    'account_errorCloudUnavailable':
+        'Chưa kết nối được XUNA Cloud. XUNA vẫn sống bình thường trên thiết bị.',
+    'account_errorCloudRejected':
+        'XUNA Cloud không chấp nhận phiên đăng nhập. Hãy đăng nhập lại.',
     'device_errorIdentityUnavailable':
         'XUNA chưa báo được PetId (firmware cũ, chưa nở hoặc đang dùng simulator) nên chưa xuất được.',
     'device_errorExportFailed':
@@ -509,5 +552,50 @@ class Locales {
     'home_replyForgotten': 'Đã xóa preference và memory.',
     'home_replyUnknown':
         'Mình chỉ hiểu: chơi nhé, nghỉ nhé, thích, không thích. Câu này không được lưu.',
+    'account_petUnbound': "XUNA chưa được gắn với tài khoản này.",
+    'account_petBound': "Đã gắn XUNA @petId với tài khoản.",
+    'account_bind': "Gắn XUNA với tài khoản",
+    'account_bindNote':
+        "Cần kết nối thiết bị. XUNA ký một mã xác minh bằng khoá riêng; khoá không bao giờ rời thiết bị.",
+    'account_bindDone': "Đã gắn XUNA với tài khoản.",
+    'account_consents': "Quyền dữ liệu",
+    'account_aiChatOn': "Trò chuyện AI: đang bật.",
+    'account_aiChatOff': "Trò chuyện AI: tắt (cần gắn XUNA và bật U3).",
+    'account_consentEyebrow': "XUNA CLOUD",
+    'account_consentTitle': "Quyền dữ liệu",
+    'account_consentIntro':
+        "Mặc định XUNA không gửi gì lên Cloud. Mỗi mục là một lựa chọn riêng; bạn có thể tắt lại bất cứ lúc nào.",
+    'account_consentU1Title': "U1 · Số liệu tổng hợp",
+    'account_consentU1Note':
+        "Chỉ các con số đếm về cách dùng, không có nội dung.",
+    'account_consentU2Title': "U2 · Sự kiện trải nghiệm",
+    'account_consentU2Note':
+        "Sự kiện từ thiết bị, dùng cho sao lưu sau này. Hiện chưa có gì được tải lên.",
+    'account_consentU3Title': "U3 · Nội dung trò chuyện",
+    'account_consentU3Note':
+        "Tin nhắn bạn gõ được gửi tới dịch vụ AI để XUNA trả lời. Không lưu lại, không dùng để XUNA học hay ghi nhớ.",
+    'account_consentSave': "Lưu lựa chọn",
+    'account_consentSaved': "Đã lưu quyền dữ liệu.",
+    'account_errorDeviceProofUnsupported':
+        "Firmware trên XUNA chưa hỗ trợ gắn tài khoản (cần Identity V2).",
+    'account_errorChallengeInvalid':
+        "Mã xác minh đã hết hạn hoặc đã được dùng. Hãy thử gắn lại.",
+    'account_errorInvalidSignature':
+        "XUNA Cloud không xác minh được chữ ký của thiết bị.",
+    'account_errorPetAlreadyBound':
+        "XUNA này đã được gắn với một tài khoản khác.",
+    'account_errorDeviceKeyMismatch':
+        "XUNA này đã được gắn với khoá của một thiết bị khác.",
+    'account_errorPetNotFound': "XUNA này chưa được gắn với tài khoản của bạn.",
+    'account_errorConsentRequired':
+        "Bạn chưa bật quyền dữ liệu cần cho việc này.",
+    'account_errorConsentVersionConflict':
+        "Quyền dữ liệu vừa được đổi ở nơi khác. Đã tải lại, hãy chọn lại.",
+    'account_errorProviderUnavailable': "Dịch vụ AI đang tạm ngưng.",
+    'account_errorInvalidInput': "Tin nhắn trống hoặc quá dài.",
+    'device_errorProofUnavailable':
+        "XUNA chưa sẵn sàng ký xác minh (chưa có khoá hoặc chưa nở). Hãy thử lại sau.",
+    'device_errorProofFailed': "XUNA không ký được mã xác minh. Hãy thử lại.",
+    'home_chatAiTag': "AI · không ghi nhớ",
   };
 }

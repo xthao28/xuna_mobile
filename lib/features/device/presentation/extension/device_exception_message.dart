@@ -34,5 +34,9 @@ extension DeviceExceptionMessage on DeviceException {
           LocaleKeys.device_errorIdentityUnavailable.tr,
         DeviceExceptionKind.exportFailed =>
           LocaleKeys.device_errorExportFailed.tr,
+        DeviceExceptionKind.proofUnavailable =>
+          LocaleKeys.device_errorProofUnavailable.tr,
+        DeviceExceptionKind.proofFailed =>
+          LocaleKeys.device_errorProofFailed.tr,
       };
 }

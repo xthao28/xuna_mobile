@@ -136,9 +136,37 @@ class HomePage extends BaseGetPage<HomeController> {
           onSignIn: controller.signIn,
           onSignOut: controller.signOut,
           onCheckCloud: controller.checkCloud,
+          boundPetId: controller.boundPet?.petId,
+          aiChatOn: controller.cloudChatReady,
+          onBind: controller.bindPet,
+          onConsents: _openConsents,
           onComingSoon: controller.showComingSoon,
         ),
       );
+
+  Future<void> _openConsents() async {
+    await controller.prepareConsents();
+    if (controller.consentDraft.value == null) return;
+    await nav.bottomSheet(
+      Obx(() {
+        final draft = controller.consentDraft.value;
+        if (draft == null) return const SizedBox.shrink();
+        return HomeConsentSheet(
+          draft: draft,
+          isBusy: controller.isBusy,
+          onAggregateMetrics: (value) =>
+              controller.editConsentDraft(aggregateMetrics: value),
+          onExperienceEvents: (value) =>
+              controller.editConsentDraft(experienceEvents: value),
+          onConversationText: (value) =>
+              controller.editConsentDraft(conversationText: value),
+          onSave: controller.saveConsents,
+          onClose: nav.back,
+        );
+      }),
+      isScrollControlled: true,
+    );
+  }
 
   void _openChatMenu() => nav.bottomSheet(
         HomeChatMenuSheet(

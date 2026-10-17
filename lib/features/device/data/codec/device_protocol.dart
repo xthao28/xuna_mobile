@@ -43,6 +43,18 @@ abstract final class DeviceProtocol {
   static const capabilityHatch = 1 << 6;
   static const capabilityIdentity = 1 << 7;
 
+  /// Capability byte 3: Identity V2 device proof (characteristic 7a6e000d).
+  static const capabilityDeviceProof = 1 << 0;
+
+  static const proofPurposeBind = 1;
+  static const proofStatusIdle = 0;
+  static const proofStatusPending = 1;
+  static const proofStatusOk = 2;
+  static const proofStatusInvalidRequest = 3;
+  static const proofStatusUnsupportedPurpose = 4;
+  static const proofStatusNotReady = 5;
+  static const proofStatusFailed = 6;
+
   static const maxRequestId = 0xffffffff;
   static const maxMemoryEpisodes = 8;
 }

@@ -23,3 +23,4 @@ export 'entity/device_export_result.dart';
 export 'repository/device_export_repository.dart';
 export 'usecase/read_pet_identity_use_case.dart';
 export 'usecase/export_device_data_use_case.dart';
+export 'entity/device_bind_proof.dart';

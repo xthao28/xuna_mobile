@@ -33,7 +33,7 @@ class _Auth implements AccountAuthDataSource {
   Future<String?> idToken() async => token;
 }
 
-class _Remote implements CloudRemoteDataSource {
+class _Remote extends Fake implements CloudRemoteDataSource {
   _Remote({this.configured = true});
   @override
   final bool configured;

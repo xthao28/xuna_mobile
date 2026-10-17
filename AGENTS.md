@@ -148,7 +148,7 @@ lib/
 
 - Local data goes through `AppHive` (or a feature data source wrapping it). Keys are constants with a schema version suffix (`'journal_entries_v1'`); stored values are versioned maps; migrate when the shape changes. Hive returns `Map<dynamic, dynamic>`: convert with `Map<String, dynamic>.from(...)` before `fromJson`.
 - Never store raw conversation text, and never store pet-life state as truth on the phone (§6).
-- `RestApiClient` and its subclasses exist but are not registered. The only approved network use (owner 2026-10-17) is the `account` feature: Firebase Auth (Google) and the XUNA backend via `CloudRemoteDataSource` (base URL from `--dart-define=XUNA_API_BASE_URL`, HTTPS in release; cleartext only in the debug manifest). Any other network call needs a session that scopes it. No secrets or API keys in source, `--dart-define` defaults or committed `envied` files.
+- `RestApiClient` and its subclasses exist but are not registered. The only approved network use (owner 2026-10-17) is the `account` feature: Firebase Auth (Google) and the XUNA backend via `CloudRemoteDataSource` (base URL from `--dart-define=XUNA_API_BASE_URL`, HTTPS in release; cleartext only in the debug manifest). Owner session 2026-10-18 added pet binding (challenge → BLE device proof → `POST /v1/pets`), consents (U1–U3) and the U3 conversation turn (SSE) to that data source; AI replies are display-only and never become candidates. Any other network call needs a session that scopes it. No secrets or API keys in source, `--dart-define` defaults or committed `envied` files.
 
 ## 5. Presentation layer (GetX)
 

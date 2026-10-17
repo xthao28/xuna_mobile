@@ -35,6 +35,10 @@ class HomeDeviceTab extends StatelessWidget {
     required this.onSignIn,
     required this.onSignOut,
     required this.onCheckCloud,
+    required this.boundPetId,
+    required this.aiChatOn,
+    required this.onBind,
+    required this.onConsents,
     required this.onComingSoon,
   });
 
@@ -61,6 +65,12 @@ class HomeDeviceTab extends StatelessWidget {
   final VoidCallback onSignIn;
   final VoidCallback onSignOut;
   final VoidCallback onCheckCloud;
+
+  /// Connected pet's PetId when bound to the signed-in account.
+  final String? boundPetId;
+  final bool aiChatOn;
+  final VoidCallback onBind;
+  final VoidCallback onConsents;
   final VoidCallback onComingSoon;
 
   @override
@@ -165,6 +175,11 @@ class HomeDeviceTab extends StatelessWidget {
           onSignIn: onSignIn,
           onSignOut: onSignOut,
           onCheckCloud: onCheckCloud,
+          connected: connected,
+          boundPetId: boundPetId,
+          aiChatOn: aiChatOn,
+          onBind: onBind,
+          onConsents: onConsents,
         ),
         const SizedBox(height: AppDimens.padding22),
         Text(LocaleKeys.home_settingsTitle.tr, style: AppTextStyle.display19),

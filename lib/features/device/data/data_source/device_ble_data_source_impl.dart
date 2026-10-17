@@ -1,12 +1,17 @@
 import 'package:xuna_mobile/features/device/data/model/learning_explanation_model.dart';
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:xuna_mobile/features/device/data/codec/protocol_codec.dart';
+import 'package:xuna_mobile/features/device/data/codec/device_proof_codec.dart';
+import 'package:xuna_mobile/features/device/data/codec/device_protocol.dart';
 import 'package:xuna_mobile/features/device/data/data_source/device_ble_data_source.dart';
+import 'package:xuna_mobile/features/device/data/data_source/device_proof_poller.dart';
 import 'package:xuna_mobile/features/device/data/data_source/result_correlator.dart';
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
+import 'package:xuna_mobile/features/device/data/model/device_proof_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/data/model/life_summary_model.dart';
 import 'package:xuna_mobile/features/device/data/model/memory_episode_model.dart';
@@ -23,6 +28,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   static const _life = 5;
   static const _explanation = 11;
   static const _identity = 12;
+  static const _proof = 13;
   static const _memoryPages = [6, 7];
 
   /// FlutterBluePlus GATT operation timeout, in seconds.
@@ -44,10 +50,16 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   BluetoothCharacteristic? _lifeCharacteristic;
   BluetoothCharacteristic? _explanationCharacteristic;
   BluetoothCharacteristic? _identityCharacteristic;
+  BluetoothCharacteristic? _proofCharacteristic;
   List<BluetoothCharacteristic> _memoryCharacteristics = [];
   StreamSubscription<List<int>>? _values;
   StreamSubscription<BluetoothConnectionState>? _connection;
   int _requestId = 0;
+
+  /// Proof request IDs start at a random value so a READ left over from an
+  /// earlier app session can never match a new request.
+  int _proofRequestId = Random.secure().nextInt(0x7fffffff) + 1;
+  bool _proofInFlight = false;
 
   /// Incremented on every connect/disconnect so stale callbacks are ignored.
   int _epoch = 0;
@@ -55,6 +67,9 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   bool _supportsStatedPreference = false;
   bool _supportsTimeSync = false;
   bool _supportsIdentity = false;
+  bool _supportsDeviceProof = false;
+  @override
+  bool get supportsDeviceProof => _supportsDeviceProof;
   @override
   bool get supportsStatedPreference => _supportsStatedPreference;
   @override
@@ -151,6 +166,10 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
         _supportsIdentity = ProtocolCodec.supportsIdentity(
           Uint8List.fromList(capabilities),
         );
+        _supportsDeviceProof = _supportsIdentity &&
+            ProtocolCodec.supportsDeviceProof(
+              Uint8List.fromList(capabilities),
+            );
       } on FormatException catch (e) {
         throw DeviceException(
           DeviceExceptionKind.unsupportedDevice,
@@ -161,6 +180,8 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
           _supportsStatedPreference ? characteristic(_explanation) : null;
       _identityCharacteristic =
           _supportsIdentity ? characteristic(_identity) : null;
+      _proofCharacteristic =
+          _supportsDeviceProof ? characteristic(_proof) : null;
       _values = _statusCharacteristic!.onValueReceived.listen((bytes) {
         if (epoch != _epoch) return;
         try {
@@ -230,6 +251,40 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
   }
 
   @override
+  Future<DeviceProofModel> requestBindProof(Uint8List nonce) async {
+    if (!_ready) throw const DeviceException(DeviceExceptionKind.notConnected);
+    final characteristic = _proofCharacteristic;
+    if (characteristic == null) {
+      throw const DeviceException(DeviceExceptionKind.unsupportedDevice);
+    }
+    if (_proofInFlight) throw const DeviceException(DeviceExceptionKind.busy);
+    _proofInFlight = true;
+    final epoch = _epoch;
+    _proofRequestId = _proofRequestId >= DeviceProtocol.maxRequestId
+        ? 1
+        : _proofRequestId + 1;
+    final requestId = _proofRequestId;
+    try {
+      // 40 bytes exceed the default 20-byte payload: a long (prepared) write
+      // with response, so the device sees exactly one complete request.
+      await characteristic.write(
+        DeviceProofCodec.encodeBindRequest(requestId, nonce),
+        allowLongWrite: true,
+        timeout: _gattTimeout,
+      );
+      return await awaitDeviceProof(
+        requestId: requestId,
+        isCurrent: () => epoch == _epoch && _ready,
+        read: () async => Uint8List.fromList(
+          await characteristic.read(timeout: _gattTimeout),
+        ),
+      );
+    } finally {
+      _proofInFlight = false;
+    }
+  }
+
+  @override
   Future<LifeSummaryModel> readLife() async {
     final characteristic = _lifeCharacteristic;
     if (!_ready || characteristic == null) {
@@ -262,6 +317,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
     _supportsStatedPreference = false;
     _supportsTimeSync = false;
     _supportsIdentity = false;
+    _supportsDeviceProof = false;
     _results.cancel(const DeviceException(DeviceExceptionKind.disconnected));
     await _values?.cancel();
     await _connection?.cancel();
@@ -274,6 +330,7 @@ class DeviceBleDataSourceImpl implements DeviceBleDataSource {
     _lifeCharacteristic = null;
     _explanationCharacteristic = null;
     _identityCharacteristic = null;
+    _proofCharacteristic = null;
     _memoryCharacteristics = [];
     await device?.disconnect();
   }

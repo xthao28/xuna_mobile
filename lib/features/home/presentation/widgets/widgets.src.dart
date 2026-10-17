@@ -4,6 +4,7 @@ export 'home_chat_bubble.dart';
 export 'home_chat_composer.dart';
 export 'home_chat_menu_sheet.dart';
 export 'home_chat_tab.dart';
+export 'home_consent_sheet.dart';
 export 'home_device_info_sheet.dart';
 export 'home_device_settings_card.dart';
 export 'home_device_status_card.dart';

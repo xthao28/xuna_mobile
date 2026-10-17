@@ -38,7 +38,9 @@
     "errorCommunicationFailed": "Không giao tiếp được với XUNA. Hãy thử lại.",
     "errorFeedbackExpired": "Đã quá 120 giây để đánh giá phản ứng này. Hãy yêu cầu XUNA chọn lại.",
     "errorIdentityUnavailable": "XUNA chưa báo được PetId (firmware cũ, chưa nở hoặc đang dùng simulator) nên chưa xuất được.",
-    "errorExportFailed": "Không lưu được file xuất trên điện thoại. Hãy thử lại."
+    "errorExportFailed": "Không lưu được file xuất trên điện thoại. Hãy thử lại.",
+    "errorProofUnavailable": "XUNA chưa sẵn sàng ký xác minh (chưa có khoá hoặc chưa nở). Hãy thử lại sau.",
+    "errorProofFailed": "XUNA không ký được mã xác minh. Hãy thử lại."
   },
   "home": {
     "navHome": "Nhà",
@@ -212,7 +214,8 @@
     "exportDoneTitle": "Đã xuất dữ liệu",
     "exportDoneMessage": "Đã lưu tại @path\nSHA-256: @hash…",
     "infoPetId": "PetId",
-    "infoPetIdUnavailable": "Chưa đọc được"
+    "infoPetIdUnavailable": "Chưa đọc được",
+    "chatAiTag": "AI · không ghi nhớ"
   },
   "account": {
     "title": "TÀI KHOẢN",
@@ -231,6 +234,35 @@
     "errorSignInFailed": "Đăng nhập Google không thành công. Hãy thử lại.",
     "errorCloudNotConfigured": "Bản app này chưa có địa chỉ máy chủ XUNA Cloud.",
     "errorCloudUnavailable": "Chưa kết nối được XUNA Cloud. XUNA vẫn sống bình thường trên thiết bị.",
-    "errorCloudRejected": "XUNA Cloud không chấp nhận phiên đăng nhập. Hãy đăng nhập lại."
+    "errorCloudRejected": "XUNA Cloud không chấp nhận phiên đăng nhập. Hãy đăng nhập lại.",
+    "petUnbound": "XUNA chưa được gắn với tài khoản này.",
+    "petBound": "Đã gắn XUNA @petId với tài khoản.",
+    "bind": "Gắn XUNA với tài khoản",
+    "bindNote": "Cần kết nối thiết bị. XUNA ký một mã xác minh bằng khoá riêng; khoá không bao giờ rời thiết bị.",
+    "bindDone": "Đã gắn XUNA với tài khoản.",
+    "consents": "Quyền dữ liệu",
+    "aiChatOn": "Trò chuyện AI: đang bật.",
+    "aiChatOff": "Trò chuyện AI: tắt (cần gắn XUNA và bật U3).",
+    "consentEyebrow": "XUNA CLOUD",
+    "consentTitle": "Quyền dữ liệu",
+    "consentIntro": "Mặc định XUNA không gửi gì lên Cloud. Mỗi mục là một lựa chọn riêng; bạn có thể tắt lại bất cứ lúc nào.",
+    "consentU1Title": "U1 · Số liệu tổng hợp",
+    "consentU1Note": "Chỉ các con số đếm về cách dùng, không có nội dung.",
+    "consentU2Title": "U2 · Sự kiện trải nghiệm",
+    "consentU2Note": "Sự kiện từ thiết bị, dùng cho sao lưu sau này. Hiện chưa có gì được tải lên.",
+    "consentU3Title": "U3 · Nội dung trò chuyện",
+    "consentU3Note": "Tin nhắn bạn gõ được gửi tới dịch vụ AI để XUNA trả lời. Không lưu lại, không dùng để XUNA học hay ghi nhớ.",
+    "consentSave": "Lưu lựa chọn",
+    "consentSaved": "Đã lưu quyền dữ liệu.",
+    "errorDeviceProofUnsupported": "Firmware trên XUNA chưa hỗ trợ gắn tài khoản (cần Identity V2).",
+    "errorChallengeInvalid": "Mã xác minh đã hết hạn hoặc đã được dùng. Hãy thử gắn lại.",
+    "errorInvalidSignature": "XUNA Cloud không xác minh được chữ ký của thiết bị.",
+    "errorPetAlreadyBound": "XUNA này đã được gắn với một tài khoản khác.",
+    "errorDeviceKeyMismatch": "XUNA này đã được gắn với khoá của một thiết bị khác.",
+    "errorPetNotFound": "XUNA này chưa được gắn với tài khoản của bạn.",
+    "errorConsentRequired": "Bạn chưa bật quyền dữ liệu cần cho việc này.",
+    "errorConsentVersionConflict": "Quyền dữ liệu vừa được đổi ở nơi khác. Đã tải lại, hãy chọn lại.",
+    "errorProviderUnavailable": "Dịch vụ AI đang tạm ngưng.",
+    "errorInvalidInput": "Tin nhắn trống hoặc quá dài."
   }
 }

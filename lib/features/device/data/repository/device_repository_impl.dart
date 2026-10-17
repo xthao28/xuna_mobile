@@ -1,8 +1,10 @@
 import 'package:xuna_mobile/features/device/domain/entity/learning_explanation.dart';
 import 'package:xuna_mobile/features/device/data/mapper/learning_explanation_mapper.dart';
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:xuna_mobile/core/domain/repository/base_repository.dart';
+import 'package:xuna_mobile/features/device/data/codec/device_protocol.dart';
 import 'package:xuna_mobile/features/device/data/data_source/device_ble_data_source.dart';
 import 'package:xuna_mobile/features/device/data/mapper/device_codes.dart';
 import 'package:xuna_mobile/features/device/data/mapper/device_status_mapper.dart';
@@ -12,6 +14,7 @@ import 'package:xuna_mobile/features/device/data/mapper/pet_identity_mapper.dart
 import 'package:xuna_mobile/features/device/data/model/device_command_model.dart';
 import 'package:xuna_mobile/features/device/data/model/device_status_model.dart';
 import 'package:xuna_mobile/features/device/domain/entity/animation_state.dart';
+import 'package:xuna_mobile/features/device/domain/entity/device_bind_proof.dart';
 import 'package:xuna_mobile/features/device/domain/entity/device_status.dart';
 import 'package:xuna_mobile/features/device/domain/entity/interaction_context.dart';
 import 'package:xuna_mobile/features/device/domain/entity/life_summary.dart';
@@ -51,6 +54,31 @@ class DeviceRepositoryImpl extends BaseRepository implements DeviceRepository {
   bool get supportsTimeSync => _dataSource.supportsTimeSync;
   @override
   bool get supportsIdentity => _dataSource.supportsIdentity;
+  @override
+  bool get supportsDeviceProof => _dataSource.supportsDeviceProof;
+
+  @override
+  Future<DeviceBindProof> requestBindProof(List<int> nonce) => _guard(() async {
+        if (!_dataSource.supportsDeviceProof) {
+          throw const DeviceException(DeviceExceptionKind.unsupportedDevice);
+        }
+        final model =
+            await _dataSource.requestBindProof(Uint8List.fromList(nonce));
+        return switch (model.status) {
+          DeviceProtocol.proofStatusOk => DeviceBindProof(
+              generation: model.generation,
+              publicKey: List.unmodifiable(model.publicKey),
+              signature: List.unmodifiable(model.signature),
+            ),
+          DeviceProtocol.proofStatusUnsupportedPurpose ||
+          DeviceProtocol.proofStatusNotReady =>
+            throw const DeviceException(DeviceExceptionKind.proofUnavailable),
+          _ => throw DeviceException(
+              DeviceExceptionKind.proofFailed,
+              resultCode: model.status,
+            ),
+        };
+      });
 
   @override
   Future<PetIdentity?> readIdentity() => _guard(() async {
